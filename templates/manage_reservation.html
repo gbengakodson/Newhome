@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h4 class="mb-0"><i class="fas fa-calendar-alt"></i> Review Reservation Request</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0">Property Details</h6>
+                                </div>
+                                <div class="card-body">
+                                    <h5>{{ property.title }}</h5>
+                                    <p>{{ property.address }}, {{ property.city }}</p>
+                                    <p><strong>Monthly Rent:</strong> ₦{{ property.price|floatformat:0 }}</p>
+                                    <p><strong>Daily Fee:</strong> ₦{{ reservation.daily_fee|floatformat:2 }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0">Tenant Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <h5>{{ reservation.tenant.username }}</h5>
+                                    <p><strong>Email:</strong> {{ reservation.tenant.email }}</p>
+                                    <p><strong>Phone:</strong> {{ reservation.tenant.profile.phone|default:"Not provided" }}</p>
+                                    <p><strong>Verified:</strong>
+                                        {% if reservation.tenant.profile.is_verified %}
+                                            <span class="badge bg-success">Yes</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">No</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Escrow Information -->
+                    {% with escrow=property.escrows.filter(tenant=reservation.tenant).first %}
+                        {% if escrow %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-lock"></i>
+                                <strong>Deposit Held in Escrow:</strong> ₦{{ escrow.amount|floatformat:2 }}
+                                <br><small>20% of annual rent (₦{{ escrow.annual_rent|floatformat:0 }})</small>
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+
+                    <div class="alert alert-success">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>If approved:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Property will be marked as <strong>RESERVED</strong></li>
+                            <li>Tenant will be charged <strong>₦{{ reservation.daily_fee|floatformat:2 }} daily</strong></li>
+                            <li>Funds will be credited to your wallet daily</li>
+                        </ul>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="d-flex justify-content-center gap-3">
+                            <button type="submit" name="action" value="approve" class="btn btn-success">
+                                <i class="fas fa-check"></i> Approve Reservation
+                            </button>
+
+                            <button type="submit" name="action" value="reject" class="btn btn-danger">
+                                <i class="fas fa-times"></i> Reject Request
+                            </button>
+
+                            <a href="{% url 'landlord_dashboard' %}" class="btn btn-secondary">
+                                Back
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+</body>
+</html>

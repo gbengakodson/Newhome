@@ -1,0 +1,994 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load property_extras %}
+<script>
+var weekData = {{ week_data|jsonify }};
+</script>
+{% load humanize %}
+
+{% block extra_css %}
+<!-- Chart.js for statistics -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- ApexCharts for beautiful charts -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/apexcharts/dist/apexcharts.css">
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<!-- DataTables for beautiful tables -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+<style>
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .hover-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .hover-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+    }
+    .timeline {
+        position: relative;
+        padding: 20px 0;
+    }
+    .timeline-item {
+        position: relative;
+        padding-left: 60px;
+        margin-bottom: 30px;
+    }
+    .timeline-badge {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+    .bg-purple {
+        background-color: #6f42c1;
+    }
+    .tracking-wide {
+        letter-spacing: 0.5px;
+    }
+    .sticky-lg-top {
+        z-index: 1020;
+    }
+    .dashboard-scroll-link.active {
+        background-color: #e7f1ff;
+        border-left: 4px solid #0d6efd;
+    }
+    .property-card {
+        transition: all 0.3s ease;
+    }
+    .property-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+    }
+    .favorite-btn {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        border: none;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .favorite-btn:hover {
+        background: #dc3545;
+        color: white;
+    }
+    #spendingChart, #breakdownChart {
+    min-height: 300px;
+    width: 100%;
+    background-color: #ffffff;
+    border-radius: 8px;
+}
+
+/* Fallback if charts don't load */
+.chart-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    color: #6c757d;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+   <!-- Page Header with Breadcrumb -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <!-- Breadcrumb Navigation -->
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-transparent p-0 mb-0">
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'home' %}" class="text-decoration-none text-secondary">
+                            <i class="fas fa-home me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="#" class="text-decoration-none text-secondary">Dashboard</a>
+                    </li>
+                    <li class="breadcrumb-item active text-primary" aria-current="page">Overview</li>
+                </ol>
+            </nav>
+
+            <!-- Date/Time Display -->
+            <div class="text-muted small">
+                <i class="far fa-calendar-alt me-1"></i> {% now "l, F j, Y" %}
+            </div>
+        </div>
+
+        <!-- Page Title and Welcome Message -->
+        <div class="mt-3">
+            <h2 class="h3 fw-bold mb-1">Welcome back, {{ user.get_full_name|default:user.username }}!</h2>
+            <p class="text-muted mb-0">
+                <i class="far fa-chart-bar me-1"></i> Here's what's happening with your account today.
+            </p>
+        </div>
+
+        <!-- Quick Stats Row (optional subtle stats) -->
+        <div class="row g-3 mt-3">
+            <div class="col-auto">
+                <div class="bg-light rounded-3 px-3 py-2">
+                    <small class="text-muted d-block">Wallet Balance</small>
+                    <span class="fw-bold text-primary">₦{{ user.profile.wallet_balance|floatformat:0|intcomma }}</span>
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="bg-light rounded-3 px-3 py-2">
+                    <small class="text-muted d-block">Active Inspections</small>
+                    <span class="fw-bold text-success">{{ active_inspections }}</span>
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="bg-light rounded-3 px-3 py-2">
+                    <small class="text-muted d-block">Properties Found</small>
+                    <span class="fw-bold text-info">{{ total_properties|default:"0" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Main Dashboard Row -->
+    <div class="row">
+        <!-- Sidebar Navigation -->
+        <div class="col-xl-2 col-lg-3 mb-4">
+            <div class="card shadow-sm border-0 sticky-lg-top" style="top: 80px;">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-bars me-2"></i> Quick Menu</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <a href="#overview" class="list-group-item list-group-item-action d-flex align-items-center py-3 dashboard-scroll-link">
+                            <span class="badge bg-primary me-3"><i class="fas fa-chart-pie"></i></span>
+                            <span>Overview</span>
+                            <span class="ms-auto text-muted small">{{ total_properties|default:"0" }}</span>
+                        </a>
+                        <a href="#wallet" class="list-group-item list-group-item-action d-flex align-items-center py-3 dashboard-scroll-link">
+                            <span class="badge bg-success me-3"><i class="fas fa-wallet"></i></span>
+                            <span>Wallet</span>
+                            <span class="ms-auto text-muted small">₦{{ user.profile.wallet_balance|floatformat:0|intcomma }}</span>
+                        </a>
+                        <a href="#inspections" class="list-group-item list-group-item-action d-flex align-items-center py-3 dashboard-scroll-link">
+                            <span class="badge bg-info me-3"><i class="fas fa-eye"></i></span>
+                            <span>Inspections</span>
+                            <span class="ms-auto text-muted small">{{ inspections.count }}</span>
+                        </a>
+                        <a href="#escrows" class="list-group-item list-group-item-action d-flex align-items-center py-3 dashboard-scroll-link">
+                            <span class="badge bg-warning me-3"><i class="fas fa-lock"></i></span>
+                            <span>Escrows</span>
+                            <span class="ms-auto text-muted small">{{ active_escrows.count }}</span>
+                        </a>
+                        <a href="#reservations" class="list-group-item list-group-item-action d-flex align-items-center py-3 dashboard-scroll-link">
+                            <span class="badge bg-secondary me-3"><i class="fas fa-calendar-alt"></i></span>
+                            <span>Reservations</span>
+                            <span class="ms-auto text-muted small">{{ active_reservations.count }}</span>
+                        </a>
+                        <a href="#favorites" class="list-group-item list-group-item-action d-flex align-items-center py-3 dashboard-scroll-link">
+                            <span class="badge bg-danger me-3"><i class="fas fa-heart"></i></span>
+                            <span>Favorites</span>
+                            <span class="ms-auto text-muted small">{{ favorites.count|default:"0" }}</span>
+                        </a>
+                        <a href="#recommended" class="list-group-item list-group-item-action d-flex align-items-center py-3 dashboard-scroll-link">
+                            <span class="badge bg-purple me-3"><i class="fas fa-thumbs-up"></i></span>
+                            <span>Recommended</span>
+                            <span class="ms-auto text-muted small">New</span>
+                        </a>
+                        <a href="#activity" class="list-group-item list-group-item-action d-flex align-items-center py-3 dashboard-scroll-link">
+                            <span class="badge bg-dark me-3"><i class="fas fa-history"></i></span>
+                            <span>Activity</span>
+                            <span class="ms-auto text-muted small">{{ recent_activities|length }}</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card-footer bg-light">
+                    <a href="{% url 'fund_wallet' %}" class="btn btn-success btn-sm w-100 mb-2">
+                        <i class="fas fa-plus-circle"></i> Fund Wallet
+                    </a>
+                    <a href="{% url 'property_list' %}" class="btn btn-primary btn-sm w-100">
+                        <i class="fas fa-search"></i> Browse Properties
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="col-xl-10 col-lg-9">
+            <!-- Statistics Cards Row -->
+            <div class="row g-4 mb-4" id="overview">
+                <div class="col-xl-3 col-md-6">
+                    <div class="card border-0 shadow-sm hover-card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0 bg-primary bg-opacity-10 rounded-circle p-3">
+                                    <i class="fas fa-wallet fa-2x text-primary"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="text-muted mb-1">Wallet Balance</h6>
+                                    <h3 class="mb-0 fw-bold">₦{{ user.profile.wallet_balance|floatformat:0|intcomma }}</h3>
+                                    <small class="text-success">
+                                        <i class="fas fa-arrow-up me-1"></i> +12% this month
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6">
+                    <div class="card border-0 shadow-sm hover-card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0 bg-success bg-opacity-10 rounded-circle p-3">
+                                    <i class="fas fa-eye fa-2x text-success"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="text-muted mb-1">Total Inspections</h6>
+                                    <h3 class="mb-0 fw-bold">{{ inspections.count }}</h3>
+                                    <small class="text-primary">
+                                        <i class="fas fa-clock me-1"></i> {{ active_inspections }} active
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6">
+                    <div class="card border-0 shadow-sm hover-card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0 bg-warning bg-opacity-10 rounded-circle p-3">
+                                    <i class="fas fa-lock fa-2x text-warning"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="text-muted mb-1">In Escrow</h6>
+                                    <h3 class="mb-0 fw-bold">₦{{ total_in_escrow|default:"0"|floatformat:0|intcomma }}</h3>
+                                    <small class="text-warning">{{ active_escrows.count }} active escrows</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6">
+                    <div class="card border-0 shadow-sm hover-card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0 bg-info bg-opacity-10 rounded-circle p-3">
+                                    <i class="fas fa-chart-line fa-2x text-info"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="text-muted mb-1">Total Spent</h6>
+                                    <h3 class="mb-0 fw-bold">₦{{ total_spent|floatformat:0|intcomma }}</h3>
+                                    <small class="text-info">Lifetime on platform</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="row g-4 mb-4">
+                <div class="col-xl-8">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-white py-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0 fw-bold"><i class="fas fa-chart-line text-primary me-2"></i> Spending Analytics</h5>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-primary active" data-period="week">Week</button>
+                                    <button class="btn btn-outline-primary" data-period="month">Month</button>
+                                    <button class="btn btn-outline-primary" data-period="year">Year</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="spendingChart" style="height: 300px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-4">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0 fw-bold"><i class="fas fa-chart-pie text-success me-2"></i> Spending Breakdown</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="breakdownChart" style="height: 300px;"></div>
+                            <div class="mt-3">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span><i class="fas fa-circle text-primary me-2"></i> Inspections</span>
+                                    <span class="fw-bold">{{ inspection_percentage|default:"45" }}%</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span><i class="fas fa-circle text-success me-2"></i> Deposits</span>
+                                    <span class="fw-bold">{{ deposit_percentage|default:"30" }}%</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span><i class="fas fa-circle text-warning me-2"></i> Reservations</span>
+                                    <span class="fw-bold">{{ reservation_percentage|default:"25" }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wallet Section -->
+            <div class="row mb-4" id="wallet">
+                <div class="col-12">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-bold"><i class="fas fa-wallet text-success me-2"></i> Wallet & Transactions</h5>
+                            <a href="{% url 'fund_wallet' %}" class="btn btn-success btn-sm">
+                                <i class="fas fa-plus-circle me-1"></i> Add Funds
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover datatable" id="transactionsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Description</th>
+                                            <th>Type</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                            <th>Reference</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for transaction in transactions %}
+                                        <tr>
+                                            <td>{{ transaction.created_at|date:"M d, Y H:i" }}</td>
+                                            <td>{{ transaction.description|truncatechars:40 }}</td>
+                                            <td>
+                                                <span class="badge {% if transaction.transaction_type == 'deposit' %}bg-success{% elif transaction.transaction_type == 'inspection' %}bg-info{% elif transaction.transaction_type == 'rent_deposit' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                                    {{ transaction.get_transaction_type_display }}
+                                                </span>
+                                            </td>
+                                            <td class="{% if transaction.amount > 0 %}text-success{% else %}text-danger{% endif %} fw-bold">
+                                                {% if transaction.amount > 0 %}+{% endif %}₦{{ transaction.amount|floatformat:2|intcomma }}
+                                            </td>
+                                            <td>
+                                                {% if transaction.status == 'success' %}
+                                                    <span class="badge bg-success">Completed</span>
+                                                {% elif transaction.status == 'pending' %}
+                                                    <span class="badge bg-warning">Pending</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Failed</span>
+                                                {% endif %}
+                                            </td>
+                                            <td><small class="text-muted">{{ transaction.reference|truncatechars:12 }}</small></td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="6" class="text-center py-4">
+                                                <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
+                                                <p>No transactions yet</p>
+                                                <a href="{% url 'fund_wallet' %}" class="btn btn-primary btn-sm">Fund Your Wallet</a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inspections Section -->
+            <div class="row mb-4" id="inspections">
+                <div class="col-12">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0 fw-bold"><i class="fas fa-eye text-info me-2"></i> Property Inspections</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover datatable">
+                                    <thead>
+                                        <tr>
+                                            <th>Property</th>
+                                            <th>Location</th>
+                                            <th>Inspection Date</th>
+                                            <th>Amount Paid</th>
+                                            <th>Access Expires</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for inspection in inspections %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    {% if inspection.property.images.first %}
+                                                        <img src="{{ inspection.property.images.first.image.url }}"
+                                                             class="rounded me-2"
+                                                             style="width: 40px; height: 40px; object-fit: cover;">
+                                                    {% endif %}
+                                                    <span>{{ inspection.property.title|truncatechars:30 }}</span>
+                                                </div>
+                                            </td>
+                                            <td>{{ inspection.property.city }}, {{ inspection.property.state }}</td>
+                                            <td>{{ inspection.paid_at|date:"M d, Y" }}</td>
+                                            <td>₦{{ inspection.amount_paid|floatformat:2 }}</td>
+                                            <td>
+                                                {% if inspection.access_expires_at > now %}
+                                                    <span class="text-success">
+                                                        <i class="far fa-clock me-1"></i> {{ inspection.access_expires_at|timeuntil }}
+                                                    </span>
+                                                {% else %}
+                                                    <span class="text-danger">Expired</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if inspection.access_expires_at > now %}
+                                                    <span class="badge bg-success">Active</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Expired</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'property_detail' inspection.property.id %}" class="btn btn-sm btn-outline-primary">
+                                                  <i class="fas fa-eye"></i> View
+                                                 </a>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="7" class="text-center py-4">
+                                                <i class="fas fa-eye-slash fa-3x text-muted mb-3"></i>
+                                                <p>No inspections yet</p>
+                                                <a href="{% url 'property_list' %}" class="btn btn-primary btn-sm">Browse Properties</a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+ <!-- Escrows and Reservations Row -->
+<div class="row g-4 mb-4">
+    <!-- Active Escrows -->
+    <div class="col-lg-6" id="escrows">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-lock text-warning me-2"></i> Active Escrows</h5>
+            </div>
+            <div class="card-body">
+                {% if active_escrows %}
+                    {% for escrow in active_escrows %}
+                    <div class="border-bottom pb-3 mb-3 {% if forloop.last %}border-0 pb-0 mb-0{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">{{ escrow.property.title }}</h6>
+                                <p class="small text-muted mb-1">
+                                    <i class="fas fa-user me-1"></i> {{ escrow.landlord.username }}
+                                </p>
+                                <span class="badge bg-{% if escrow.escrow_type == 'occupancy' %}success{% else %}info{% endif %}">
+                                    {{ escrow.get_escrow_type_display }}
+                                </span>
+                                {% if escrow.tenant_approved %}
+                                    <span class="badge bg-success ms-1">✓ User</span>
+                                {% endif %}
+                                {% if escrow.landlord_approved %}
+                                    <span class="badge bg-success ms-1">✓ Landlord</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-end">
+                                <h6 class="mb-1">₦{{ escrow.amount|floatformat:0|intcomma }}</h6>
+                                <small class="text-muted">{{ escrow.created_at|date:"M d, Y" }}</small>
+
+                                <!-- Button to trigger escrow modal -->
+                                <button type="button" class="btn btn-sm btn-outline-warning mt-2 w-100"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#escrowModal{{ escrow.id }}">
+                                    <i class="fas fa-eye"></i> View Details
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Escrow Modal -->
+                    <div class="modal fade" id="escrowModal{{ escrow.id }}" tabindex="-1">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header bg-warning">
+                                    <h5 class="modal-title"><i class="fas fa-lock me-2"></i>Escrow Details</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row mb-3">
+                                        <div class="col-5 text-muted">Property:</div>
+                                        <div class="col-7 fw-semibold">{{ escrow.property.title }}</div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-5 text-muted">Amount:</div>
+                                        <div class="col-7 text-primary fw-bold">₦{{ escrow.amount|floatformat:0|intcomma }}</div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-5 text-muted">Type:</div>
+                                        <div class="col-7">{{ escrow.get_escrow_type_display }}</div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-5 text-muted">Status:</div>
+                                        <div class="col-7"><span class="badge bg-warning">{{ escrow.get_status_display }}</span></div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-5 text-muted">Created:</div>
+                                        <div class="col-7">{{ escrow.created_at|date:"F j, Y" }}</div>
+                                    </div>
+                                    <hr>
+                                    <div class="row mb-3">
+                                        <div class="col-5 text-muted">Tenant:</div>
+                                        <div class="col-7">
+                                            {{ escrow.tenant.username }}
+                                            <span class="badge {% if escrow.tenant_approved %}bg-success{% else %}bg-warning{% endif %} ms-2">
+                                                {% if escrow.tenant_approved %}Approved{% else %}Pending{% endif %}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-5 text-muted">Landlord:</div>
+                                        <div class="col-7">
+                                            {{ escrow.landlord.username }}
+                                            <span class="badge {% if escrow.landlord_approved %}bg-success{% else %}bg-warning{% endif %} ms-2">
+                                                {% if escrow.landlord_approved %}Approved{% else %}Pending{% endif %}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-lock-open fa-3x text-muted mb-3"></i>
+                        <p>No active escrows</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Reservations -->
+    <div class="col-lg-6" id="reservations">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-calendar-alt text-info me-2"></i> Active Reservations</h5>
+            </div>
+            <div class="card-body">
+                {% if active_reservations %}
+                    {% for reservation in active_reservations %}
+                    <div class="border-bottom pb-3 mb-3 {% if forloop.last %}border-0 pb-0 mb-0{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">{{ reservation.property.title }}</h6>
+                                <p class="small text-muted mb-1">
+                                    <i class="fas fa-user me-1"></i> {{ reservation.property.landlord.username }}
+                                </p>
+                                <span class="badge bg-info">{{ reservation.days_reserved }} days</span>
+                                <span class="badge bg-{% if reservation.status == 'active' %}success{% else %}warning{% endif %} ms-1">
+                                    {{ reservation.status|title }}
+                                </span>
+                            </div>
+                            <div class="text-end">
+                                <h6 class="mb-1 text-info">₦{{ reservation.daily_fee|floatformat:0|intcomma }}<small class="text-muted fs-6">/day</small></h6>
+                                <small class="text-muted">Started: {{ reservation.start_date|date:"M d, Y" }}</small>
+
+                                <!-- Button to trigger reservation modal -->
+                                <button type="button" class="btn btn-sm btn-outline-info mt-2 w-100"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#reservationModal{{ reservation.id }}">
+                                    <i class="fas fa-calendar-alt"></i> View Details
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reservation Modal -->
+                    <div class="modal fade" id="reservationModal{{ reservation.id }}" tabindex="-1">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header bg-info text-white">
+                                    <h5 class="modal-title"><i class="fas fa-calendar-alt me-2"></i>Reservation Details</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <!-- Property Info -->
+                                    <div class="row mb-3">
+                                        <div class="col-5 text-muted">Property:</div>
+                                        <div class="col-7 fw-semibold">{{ reservation.property.title }}</div>
+                                    </div>
+
+                                    <!-- Status -->
+                                    <div class="row mb-3">
+                                        <div class="col-5 text-muted">Status:</div>
+                                        <div class="col-7">
+                                            <span class="badge bg-{% if reservation.status == 'active' %}success{% else %}warning{% endif %}">
+                                                {{ reservation.status|title }}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Dates -->
+                                    <div class="row mb-3">
+                                        <div class="col-5 text-muted">Started:</div>
+                                        <div class="col-7">{{ reservation.start_date|date:"F j, Y" }}</div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-5 text-muted">Days Active:</div>
+                                        <div class="col-7">{{ reservation.days_reserved }} days</div>
+                                    </div>
+
+                                    <!-- Financial Info -->
+                                    <hr>
+                                    <div class="row mb-3">
+                                        <div class="col-5 text-muted">Daily Fee:</div>
+                                        <div class="col-7 text-info fw-bold">₦{{ reservation.daily_fee|floatformat:0|intcomma }}</div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-5 text-muted">Total Charged:</div>
+                                        <div class="col-7 text-success fw-bold">₦{{ reservation.total_charged|floatformat:0|intcomma }}</div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-5 text-muted">Last Charged:</div>
+                                        <div class="col-7">
+                                            {% if reservation.last_charged_date %}
+                                                {{ reservation.last_charged_date|date:"F j, Y" }}
+                                            {% else %}
+                                                <span class="text-muted">Not yet</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <!-- Landlord Info -->
+                                    <hr>
+                                    <div class="row mb-3">
+                                        <div class="col-5 text-muted">Landlord:</div>
+                                        <div class="col-7">{{ reservation.property.landlord.username }}</div>
+                                    </div>
+
+                                    <!-- Action Buttons -->
+                                    <div class="mt-4">
+                                        {% if reservation.status == 'active' %}
+                                            <button class="btn btn-danger w-100" onclick="cancelReservation({{ reservation.id }})">
+                                                <i class="fas fa-times-circle me-2"></i>Cancel Reservation
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <a href="{% url 'property_detail' escrow.property.id %}" class="btn btn-sm btn-outline-warning">
+                                    <i class="fas fa-eye"></i> Check Property
+                                    </a>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                        <p>No active reservations</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+            <!-- Recommended Properties -->
+<div class="row mb-4" id="recommended">
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-thumbs-up text-success me-2"></i> Recommended For You</h5>
+                <a href="{% url 'property_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    {% for property in recommended_properties %}
+                    <div class="col-xl-3 col-lg-4 col-md-6">
+                        <div class="card property-card h-100 border-0 shadow-sm">
+                            <!-- Property Image -->
+                            <div class="position-relative">
+                                {% if property.images.first %}
+                                    <img src="{{ property.images.first.image.url }}"
+                                         class="card-img-top"
+                                         style="height: 160px; object-fit: cover;">
+                                {% else %}
+                                    <div class="bg-secondary text-white d-flex align-items-center justify-content-center"
+                                         style="height: 160px;">
+                                        <i class="fas fa-home fa-3x"></i>
+                                    </div>
+                                {% endif %}
+
+                                <!-- Status Badge -->
+                                <span class="position-absolute top-0 end-0 m-2 badge bg-{% if property.occupancy_status == 'vacant' %}success{% else %}danger{% endif %}">
+                                    {{ property.occupancy_status|title }}
+                                </span>
+                            </div>
+
+                            <div class="card-body">
+                                <h6 class="card-title fw-bold">{{ property.title|truncatechars:20 }}</h6>
+                                <p class="small text-muted mb-1">
+                                    <i class="fas fa-map-marker-alt text-primary"></i> {{ property.city }}
+                                </p>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-bold text-primary">₦{{ property.price|floatformat:0 }}/mo</span>
+                                    <span class="text-warning small">
+                                        <i class="fas fa-star"></i> {{ property.avg_rating|default:"4.5" }}
+                                    </span>
+                                </div>
+
+                                <!-- Quick Specs -->
+                                <div class="d-flex justify-content-between small text-muted mb-2">
+                                    <span><i class="fas fa-bed text-primary me-1"></i> {{ property.bedrooms }}</span>
+                                    <span><i class="fas fa-bath text-primary me-1"></i> {{ property.bathrooms|floatformat:"0" }}</span>
+                                    <span><i class="fas fa-arrows-alt text-primary me-1"></i> {{ property.sqft }}</span>
+                                </div>
+
+                                <!-- Action Button with Security Checks -->
+                                {% if user.is_authenticated %}
+                                    {% if user.profile.user_type == 'tenant' %}
+                                        {% if property.id in paid_inspections %}
+                                            <a href="{% url 'property_detail' property.id %}" class="btn btn-success btn-sm w-100">
+                                                <i class="fas fa-eye me-2"></i>View Details
+                                            </a>
+                                        {% else %}
+                                            {% if user.profile.email_verified and user.profile.is_verified %}
+                                                {% if user.profile.wallet_balance >= property.inspection_fee %}
+                                                    <a href="{% url 'pay_inspection_before_view' property.id %}" class="btn btn-primary btn-sm w-100">
+                                                        <i class="fas fa-lock-open me-2"></i>Pay to Inspect
+                                                    </a>
+                                                {% else %}
+                                                    <button class="btn btn-secondary btn-sm w-100" disabled
+                                                            title="Insufficient balance. Please fund your wallet.">
+                                                        <i class="fas fa-exclamation-triangle me-2"></i>Insufficient Funds
+                                                    </button>
+                                                    <small class="text-muted d-block text-center mt-1">
+                                                        <a href="{% url 'fund_wallet' %}" class="text-primary small">Fund wallet</a>
+                                                    </small>
+                                                {% endif %}
+                                            {% else %}
+                                                <button class="btn btn-secondary btn-sm w-100" disabled
+                                                        title="Complete verification to inspect properties">
+                                                    <i class="fas fa-lock me-2"></i>Verification Required
+                                                </button>
+                                                <small class="text-muted d-block text-center mt-1">
+                                                    <a href="{% url 'submit_verification' %}" class="text-primary small">Verify account</a>
+                                                </small>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% else %}
+                                        <a href="{% url 'property_detail' property.id %}" class="btn btn-outline-primary btn-sm w-100">
+                                            <i class="fas fa-eye me-2"></i>View Details
+                                        </a>
+                                    {% endif %}
+                                {% else %}
+                                    <a href="{% url 'login' %}?next={% url 'property_detail' property.id %}" class="btn btn-outline-primary btn-sm w-100">
+                                        <i class="fas fa-sign-in-alt me-2"></i>Login to View
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-center py-5">
+                        <i class="fas fa-home fa-4x text-muted mb-3"></i>
+                        <h5>No recommendations yet</h5>
+                        <p class="text-muted">Check back later or browse our properties</p>
+                        <a href="{% url 'property_list' %}" class="btn btn-primary">Browse Properties</a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- Recent Activity -->
+            <div class="row mb-4" id="activity">
+                <div class="col-12">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0 fw-bold"><i class="fas fa-history text-info me-2"></i> Recent Activity</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="timeline">
+                                {% for activity in recent_activities %}
+                                <div class="timeline-item">
+                                    <div class="timeline-badge bg-{{ activity.color }}">
+                                        <i class="fas {{ activity.icon }}"></i>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <h6>{{ activity.title }}</h6>
+                                        <p class="text-muted small">{{ activity.description }}</p>
+                                        <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">No recent activity</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add this right before the closing </body> tag for debugging -->
+<script>
+console.log("ApexCharts loaded:", typeof ApexCharts !== 'undefined');
+console.log("Week data:", {{ week_data|safe }});
+console.log("Week days:", {{ week_days|safe }});
+console.log("Percentages:", {{ inspection_percentage }}, {{ deposit_percentage }}, {{ reservation_percentage }});
+</script>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if ApexCharts is loaded
+    if (typeof ApexCharts === 'undefined') {
+        console.error('ApexCharts not loaded!');
+        return;
+    }
+
+    console.log('ApexCharts loaded successfully');
+
+    // Prepare data - ensure it's proper JavaScript numbers
+    var weekData = JSON.parse('{{ week_data|safe }}' || '[3000,4000,3500,5000,4500,6000,5500]');
+    var weekDays = JSON.parse('{{ week_days|safe }}' || '["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]');
+    var inspPercent = parseInt('{{ inspection_percentage|default:"45" }}');
+    var depPercent = parseInt('{{ deposit_percentage|default:"30" }}');
+    var resPercent = parseInt('{{ reservation_percentage|default:"25" }}');
+
+    console.log('Chart data:', {weekData, weekDays, inspPercent, depPercent, resPercent});
+
+    // Spending Chart
+    try {
+        var spendingOptions = {
+            chart: {
+                type: 'area',
+                height: 300,
+                toolbar: { show: true }
+            },
+            series: [{
+                name: 'Spending (₦)',
+                data: weekData
+            }],
+            xaxis: {
+                categories: weekDays
+            },
+            colors: ['#0d6efd'],
+            stroke: { curve: 'smooth', width: 2 },
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shadeIntensity: 1,
+                    opacityFrom: 0.7,
+                    opacityTo: 0.3
+                }
+            },
+            tooltip: {
+                y: {
+                    formatter: function(val) {
+                        return '₦' + Number(val).toLocaleString();
+                    }
+                }
+            }
+        };
+
+        var spendingChart = new ApexCharts(document.querySelector("#spendingChart"), spendingOptions);
+        spendingChart.render();
+        console.log('Spending chart rendered');
+    } catch (e) {
+        console.error('Error rendering spending chart:', e);
+    }
+
+    // Breakdown Chart
+    try {
+        var breakdownOptions = {
+            chart: {
+                type: 'donut',
+                height: 300
+            },
+            series: [inspPercent, depPercent, resPercent],
+            labels: ['Inspections', 'Deposits', 'Reservations'],
+            colors: ['#0d6efd', '#198754', '#ffc107'],
+            legend: { show: false },
+            tooltip: {
+                y: {
+                    formatter: function(val) {
+                        return val + '%';
+                    }
+                }
+            }
+        };
+
+        var breakdownChart = new ApexCharts(document.querySelector("#breakdownChart"), breakdownOptions);
+        breakdownChart.render();
+        console.log('Breakdown chart rendered');
+    } catch (e) {
+        console.error('Error rendering breakdown chart:', e);
+    }
+});
+
+// Period buttons
+document.querySelectorAll('[data-period]').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('[data-period]').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        // You can add AJAX here later
+        console.log('Period changed to:', this.dataset.period);
+    });
+});
+</script>
+
+<script>
+// Simple function to cancel reservation
+function cancelReservation(reservationId) {
+    if (confirm('Are you sure you want to cancel this reservation?')) {
+        // Redirect to cancel URL
+        window.location.href = `/reservation/${reservationId}/cancel/`;
+    }
+}
+</script>
+{% endblock %}

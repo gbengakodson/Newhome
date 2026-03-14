@@ -1,0 +1,213 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'property_detail' property.id %}">{{ property.title }}</a></li>
+                    <li class="breadcrumb-item active">Rental Agreement</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Rental Agreement - {{ property.title }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        Please review the rental agreement carefully. You must sign this agreement before you can:
+                        <ul class="mb-0 mt-2">
+                            <li>Request to occupy this property</li>
+                            <li>Reserve this property</li>
+                        </ul>
+                    </div>
+
+                    <!-- Agreement Preview -->
+                    <div class="agreement-preview mb-4">
+                        <iframe src="{{ agreement_url }}" width="100%" height="600px" style="border: 1px solid #ddd;"></iframe>
+                    </div>
+
+                    <!-- Signature Section -->
+                    <div class="signature-section">
+                        <h5>Sign Below</h5>
+                        <p class="text-muted">By signing below, you agree to the terms and conditions of this rental agreement.</p>
+
+                        <div class="signature-pad-container mb-3">
+                            <canvas id="signature-pad" width="600" height="200" style="border: 2px dashed #ccc; background: #fff;"></canvas>
+                        </div>
+
+                        <div class="signature-actions mb-3">
+                            <button type="button" class="btn btn-secondary" id="clear-signature">
+                                <i class="fas fa-eraser"></i> Clear
+                            </button>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="agree-terms">
+                            <label class="form-check-label" for="agree-terms">
+                                I have read and agree to the terms and conditions of this rental agreement.
+                            </label>
+                        </div>
+
+                        <button type="button" class="btn btn-success btn-lg" id="sign-agreement" disabled>
+                            <i class="fas fa-pen"></i> Sign Agreement
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Property Summary</h5>
+                </div>
+                <div class="card-body">
+                    {% if property.images.all %}
+                        <img src="{{ property.images.first.image.url }}" class="img-fluid rounded mb-3" alt="{{ property.title }}">
+                    {% endif %}
+
+                    <h6>{{ property.title }}</h6>
+                    <p class="text-muted">{{ property.address }}, {{ property.city }}</p>
+
+                    <hr>
+
+                    <p><strong>Monthly Rent:</strong> ₦{{ property.price|floatformat:0 }}</p>
+                    <p><strong>Landlord:</strong> {{ property.landlord.get_full_name|default:property.landlord.username }}</p>
+
+                    {% if property.features.all %}
+                        <hr>
+                        <h6>Features:</h6>
+                        <div class="property-features">
+                            {% for feature in property.features.all|slice:":4" %}
+                                <span class="badge bg-secondary me-1">
+                                    <i class="fas {{ feature.icon }}"></i> {{ feature.name }}
+                                </span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Signature Pad JavaScript -->
+<script src="{% static 'js/signature-pad.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const canvas = document.getElementById('signature-pad');
+        const signaturePad = new SignaturePad(canvas);
+
+        const agreeCheckbox = document.getElementById('agree-terms');
+        const signButton = document.getElementById('sign-agreement');
+        const clearButton = document.getElementById('clear-signature');
+
+        // Enable/disable sign button based on checkbox and signature
+        function updateSignButton() {
+            signButton.disabled = !(agreeCheckbox.checked && !signaturePad.isEmpty());
+        }
+
+        agreeCheckbox.addEventListener('change', updateSignButton);
+
+        signaturePad.canvas.addEventListener('mouseup', updateSignButton);
+        signaturePad.canvas.addEventListener('touchend', updateSignButton);
+
+        clearButton.addEventListener('click', function() {
+            signaturePad.clear();
+            updateSignButton();
+        });
+
+        // Handle signing
+        signButton.addEventListener('click', function() {
+            if (signaturePad.isEmpty()) {
+                alert('Please provide your signature.');
+                return;
+            }
+
+            if (!agreeCheckbox.checked) {
+                alert('Please agree to the terms.');
+                return;
+            }
+
+            // Disable button to prevent double submission
+            signButton.disabled = true;
+            signButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+            // Get signature data
+            const signatureData = signaturePad.toDataURL();
+
+            // Send to server
+            fetch('{% url "sign_agreement" property.id %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    signature: signatureData
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    alert('Agreement signed successfully!');
+
+                    // Redirect to property detail
+                    window.location.href = data.redirect_url;
+                } else {
+                    alert('Error: ' + data.error);
+                    signButton.disabled = false;
+                    signButton.innerHTML = '<i class="fas fa-pen"></i> Sign Agreement';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+                signButton.disabled = false;
+                signButton.innerHTML = '<i class="fas fa-pen"></i> Sign Agreement';
+            });
+        });
+    });
+</script>
+
+<style>
+    .signature-pad-container {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+    }
+
+    #signature-pad {
+        max-width: 100%;
+        height: auto;
+        cursor: crosshair;
+    }
+
+    .agreement-preview {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}
+</body>
+</html>

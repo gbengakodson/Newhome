@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Review Tenant Interest</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Property Details</h5>
+                            <p><strong>{{ property.title }}</strong></p>
+                            <p>{{ property.address }}, {{ property.city }}</p>
+                            <p>Monthly Rent: ₦{{ property.price|floatformat:0 }}</p>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h5>Tenant Profile</h5>
+                            <p><strong>{{ tenant.username }}</strong></p>
+                            <p>Email: {{ tenant.email }}</p>
+                            <p>Phone: {{ tenant.profile.phone|default:"Not provided" }}</p>
+                            <p>Verified:
+                                {% if tenant.profile.is_verified %}
+                                    <span class="badge bg-success">Yes</span>
+                                {% else %}
+                                    <span class="badge bg-danger">No</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-clock"></i>
+                        <strong>Expires:</strong> {{ interest.expires_at|date:"F j, Y H:i" }}
+                        ({{ interest.expires_at|timeuntil }} remaining)
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="d-flex justify-content-center gap-3">
+                            <button type="submit" name="action" value="approve" class="btn btn-success">
+                                <i class="fas fa-check"></i> Approve Interest
+                            </button>
+
+                            <button type="submit" name="action" value="reject" class="btn btn-danger">
+                                <i class="fas fa-times"></i> Reject Interest
+                            </button>
+
+                            <a href="{% url 'landlord_dashboard' %}" class="btn btn-secondary">
+                                Back
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+</body>
+</html>

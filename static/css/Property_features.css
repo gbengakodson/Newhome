@@ -1,0 +1,37 @@
+/* In your static CSS file */
+.property-features .badge {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.7rem;
+    margin-right: 0.3rem;
+}
+
+.feature-checkbox {
+    margin-right: 0.5rem;
+}
+
+.feature-checkbox + label {
+    cursor: pointer;
+}
+
+.feature-checkbox:checked + label {
+    color: #007bff;
+    font-weight: bold;
+}
+
+/* For the add property form */
+.form-check {
+    padding: 0.5rem;
+    border: 1px solid #e9ecef;
+    border-radius: 0.25rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s;
+}
+
+.form-check:hover {
+    background-color: #f8f9fa;
+    border-color: #007bff;
+}
+
+.form-check-input:checked + .form-check-label {
+    color: #007bff;
+}

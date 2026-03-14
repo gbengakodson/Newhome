@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div class="module">
+    <h1>Verification Queue</h1>
+
+    <div style="margin: 20px 0;">
+        <a href="{% url 'admin:core_profile_changelist' %}" class="button">Back to Profiles</a>
+    </div>
+
+    <table style="width: 100%;">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>User Type</th>
+                <th>ID Type</th>
+                <th>ID Number</th>
+                <th>ID Document</th>
+                <th>Passport Photo</th>
+                <th>Submitted</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for profile in pending_profiles %}
+            <tr>
+                <td>{{ profile.user.username }}</td>
+                <td>{{ profile.user.email }}</td>
+                <td>{{ profile.get_user_type_display }}</td>
+                <td>{{ profile.get_id_type_display }}</td>
+                <td>{{ profile.id_number }}</td>
+                <td>
+                    {% if profile.id_document %}
+                        <a href="{{ profile.id_document.url }}" target="_blank">View</a>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if profile.passport_photo %}
+                        <a href="{{ profile.passport_photo.url }}" target="_blank">View</a>
+                    {% endif %}
+                </td>
+                <td>{{ profile.verification_submitted_at }}</td>
+                <td>
+                    <form method="post" action="{% url 'admin:core_profile_changelist' %}" style="display: inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="approve_verification">
+                        <input type="hidden" name="_selected_action" value="{{ profile.id }}">
+                        <button type="submit" class="button" style="background: green;">Approve</button>
+                    </form>
+
+                    <form method="post" action="{% url 'admin:core_profile_changelist' %}" style="display: inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="reject_verification">
+                        <input type="hidden" name="_selected_action" value="{{ profile.id }}">
+                        <button type="submit" class="button" style="background: red;">Reject</button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9" style="text-align: center;">No pending verification requests.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+</body>
+</html>

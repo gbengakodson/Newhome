@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Express Interest in Property</h4>
+                </div>
+                <div class="card-body">
+                    <div class="property-summary mb-4">
+                        <h5>{{ property.title }}</h5>
+                        <p class="text-muted">{{ property.address }}, {{ property.city }}</p>
+                        <p><strong>Monthly Rent:</strong> ₦{{ property.price|floatformat:0 }}</p>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>What happens next?</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>The landlord will review your profile and decide whether to approve or reject your interest</li>
+                            <li>You'll be notified within 7 days</li>
+                            <li>If approved, your inspection access will be extended to 7 days</li>
+                            <li>You can then sign the agreement, pay deposit, and reserve the property</li>
+                        </ul>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <i class="fas fa-clock"></i>
+                        <strong>Your current inspection expires:</strong>
+                        {{ inspection.access_expires_at|date:"F j, Y H:i" }}
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="confirm" required>
+                            <label class="form-check-label" for="confirm">
+                                I understand that expressing interest shares my profile information with the landlord for review.
+                            </label>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-thumbs-up"></i> Confirm Interest
+                            </button>
+                            <a href="{% url 'property_detail' property.id %}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+</body>
+</html>

@@ -1,0 +1,323 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body>
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        {% if editing %}
+                            <i class="fas fa-edit"></i> Edit Property
+                        {% else %}
+                            <i class="fas fa-plus-circle"></i> Add New Property
+                        {% endif %}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <strong>Please correct the following errors:</strong>
+                            <ul>
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        <li>{{ field|title }}: {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+
+                    <form method="post" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+
+                        <!-- Basic Info Section -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">Basic Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label for="{{ form.title.id_for_label }}">Property Title *</label>
+                                        {{ form.title }}
+                                        <small class="form-text text-muted">Give your property a catchy title</small>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label for="{{ form.description.id_for_label }}">Description *</label>
+                                        {{ form.description }}
+                                        <small class="form-text text-muted">Describe the property in detail</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Location Section -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">Location</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-8 mb-3">
+                                        <label for="{{ form.address.id_for_label }}">Street Address *</label>
+                                        {{ form.address }}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="{{ form.city.id_for_label }}">City *</label>
+                                        {{ form.city }}
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label for="{{ form.state.id_for_label }}">State *</label>
+                                        {{ form.state }}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="{{ form.zipcode.id_for_label }}">Zip Code *</label>
+                                        {{ form.zipcode }}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="{{ form.inspection_fee.id_for_label }}">Inspection Fee (₦) *</label>
+                                        {{ form.inspection_fee }}
+                                        <small class="form-text text-muted">Fee tenants pay to view full details</small>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.latitude.id_for_label }}">Latitude (Optional)</label>
+                                        {{ form.latitude }}
+                                        <small class="form-text text-muted">
+                                            <a href="https://www.latlong.net/" target="_blank">Find coordinates</a>
+                                        </small>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.longitude.id_for_label }}">Longitude (Optional)</label>
+                                        {{ form.longitude }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Property Details Section -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">Property Details</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3 mb-3">
+                                        <label for="{{ form.price.id_for_label }}">Monthly Rent (₦) *</label>
+                                        {{ form.price }}
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label for="{{ form.bedrooms.id_for_label }}">Bedrooms *</label>
+                                        {{ form.bedrooms }}
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label for="{{ form.bathrooms.id_for_label }}">Bathrooms *</label>
+                                        {{ form.bathrooms }}
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label for="{{ form.sqft.id_for_label }}">Square Feet *</label>
+                                        {{ form.sqft }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Features Section -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">Property Features</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    {% for feature in form.features.field.queryset %}
+                                        <div class="col-md-3 mb-3">
+                                            <div class="form-check">
+                                                <input type="checkbox"
+                                                       name="features"
+                                                       value="{{ feature.id }}"
+                                                       class="form-check-input"
+                                                       id="feature_{{ feature.id }}"
+                                                       {% if feature in form.instance.features.all %}checked{% endif %}>
+                                                <label class="form-check-label" for="feature_{{ feature.id }}">
+                                                    <i class="fas {{ feature.icon }}"></i> {{ feature.name }}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    {% empty %}
+                                        <div class="col-12">
+                                            <p class="text-muted">No features configured yet. Contact admin.</p>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Images Section -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">Property Images</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Existing images (for edit mode) -->
+                                <!-- This should be in your template - it's correct -->
+<div>
+    <h6>{% if editing %}Add New Images{% else %}Upload Images{% endif %}</h6>
+    <label for="images" class="form-label">Select Images</label>
+    <input type="file"
+           name="images"  <!-- This name="images" matches request.FILES.getlist('images') -->
+           id="images"
+           class="form-control"
+           accept="image/*"
+           multiple>
+    <small class="form-text text-muted">
+        You can select multiple images. The first image will be the cover photo.
+    </small>
+</div>
+
+                                <!-- Upload new images -->
+                                <div>
+                                    <h6>{% if editing %}Add New Images{% else %}Upload Images{% endif %}</h6>
+                                    <label for="images" class="form-label">Select Images</label>
+                                    <input type="file"
+                                           name="images"
+                                           id="images"
+                                           class="form-control"
+                                           accept="image/*"
+                                           multiple
+                                           {% if not editing %}required{% endif %}>
+                                    <small class="form-text text-muted">
+                                        You can select multiple images. The first image will be the cover photo.
+                                        Allowed formats: JPG, PNG, GIF (Max 5MB each)
+                                    </small>
+
+                                    <!-- Image preview area -->
+                                    <div id="imagePreview" class="row mt-3"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rental Agreement Section -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">Rental Agreement</h5>
+                            </div>
+                            <div class="card-body">
+                                {% if editing and property.rental_agreement %}
+                                    <div class="mb-3">
+                                        <label>Current Agreement:</label>
+                                        <div>
+                                            <a href="{{ property.rental_agreement.url }}"
+                                               target="_blank"
+                                               class="btn btn-sm btn-info">
+                                                <i class="fas fa-file-pdf"></i> View Current Agreement
+                                            </a>
+                                        </div>
+                                    </div>
+                                {% endif %}
+
+                                <div class="mb-3">
+                                    <label for="{{ form.rental_agreement.id_for_label }}">
+                                        {% if editing and property.rental_agreement %}
+                                            Replace Agreement (Optional)
+                                        {% else %}
+                                            Upload Rental Agreement (Optional)
+                                        {% endif %}
+                                    </label>
+                                    {{ form.rental_agreement }}
+                                    <small class="form-text text-muted">
+                                        Upload a PDF document containing your rental terms and conditions.
+                                        Max size: 10MB
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'landlord_dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check"></i>
+                                {% if editing %}Update Property{% else %}List Property{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for image preview -->
+<script>
+document.getElementById('images').addEventListener('change', function(e) {
+    const preview = document.getElementById('imagePreview');
+    preview.innerHTML = '';
+
+    const files = e.target.files;
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            const col = document.createElement('div');
+            col.className = 'col-md-3 mb-3';
+
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.className = 'img-fluid rounded';
+            img.style.height = '150px';
+            img.style.objectFit = 'cover';
+            img.style.width = '100%';
+
+            const label = document.createElement('p');
+            label.className = 'text-center small mt-1';
+            label.textContent = file.name.substring(0, 15) + (file.name.length > 15 ? '...' : '');
+
+            col.appendChild(img);
+            col.appendChild(label);
+            preview.appendChild(col);
+        }
+
+        reader.readAsDataURL(file);
+    }
+});
+</script>
+
+<style>
+.form-check {
+    padding: 0.5rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    transition: all 0.2s;
+}
+.form-check:hover {
+    background-color: #f8f9fa;
+    border-color: #007bff;
+}
+.form-check-input:checked + .form-check-label {
+    color: #007bff;
+    font-weight: bold;
+}
+</style>
+{% endblock %}
+
+ </body>
+</html>

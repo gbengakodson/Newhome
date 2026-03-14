@@ -1,0 +1,424 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Breadcrumb -->
+        <div class="col-12 mb-4">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-light p-3 rounded">
+                    <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'tenant_dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Fund Wallet</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content - Fund Wallet Form -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-wallet text-primary me-2"></i>
+                        Add Money to Your Wallet
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    
+                    <!-- Current Balance Card -->
+                    <div class="bg-light p-4 rounded-4 mb-4 text-center">
+                        <p class="text-muted mb-1">Current Balance</p>
+                        <h2 class="display-4 fw-bold text-primary mb-0">₦{{ wallet_balance|floatformat:2|intcomma }}</h2>
+                    </div>
+
+                    <!-- Fund Wallet Form -->
+                    <form method="post" action="{% url 'fund_wallet' %}" id="fundWalletForm">
+                        {% csrf_token %}
+                        
+                        <!-- Amount Input -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Enter Amount (₦)</label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light border-0">
+                                    <i class="fas fa-naira-sign text-primary"></i>
+                                </span>
+                                <input type="number" 
+                                       name="amount" 
+                                       id="amount" 
+                                       class="form-control form-control-lg bg-light border-0" 
+                                       placeholder="e.g., 5000" 
+                                       min="100" 
+                                       step="100" 
+                                       value="1000"
+                                       required>
+                                <span class="input-group-text bg-light border-0 text-muted">NGN</span>
+                            </div>
+                            <small class="text-muted">Minimum amount: ₦100</small>
+                        </div>
+
+                        <!-- Quick Amount Selector -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Quick Select</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button type="button" class="btn btn-outline-primary quick-amount" data-amount="1000">₦1,000</button>
+                                <button type="button" class="btn btn-outline-primary quick-amount" data-amount="5000">₦5,000</button>
+                                <button type="button" class="btn btn-outline-primary quick-amount" data-amount="10000">₦10,000</button>
+                                <button type="button" class="btn btn-outline-primary quick-amount" data-amount="20000">₦20,000</button>
+                                <button type="button" class="btn btn-outline-primary quick-amount" data-amount="50000">₦50,000</button>
+                            </div>
+                        </div>
+
+                        <!-- Payment Method Selection -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Payment Method</label>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="payment-method-card active" data-method="card">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="payment_method" 
+                                                   id="methodCard" value="card" checked>
+                                            <label class="form-check-label d-flex align-items-center" for="methodCard">
+                                                <img src="https://cdn-icons-png.flaticon.com/512/179/179457.png" 
+                                                     alt="Card" style="width: 30px; height: 30px; object-fit: contain;" class="me-2">
+                                                <div>
+                                                    <span class="d-block fw-semibold">Credit/Debit Card</span>
+                                                    <small class="text-muted">Visa, Mastercard, Verve</small>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="payment-method-card" data-method="transfer">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="payment_method" 
+                                                   id="methodTransfer" value="transfer">
+                                            <label class="form-check-label d-flex align-items-center" for="methodTransfer">
+                                                <img src="https://cdn-icons-png.flaticon.com/512/2830/2830288.png" 
+                                                     alt="Transfer" style="width: 30px; height: 30px; object-fit: contain;" class="me-2">
+                                                <div>
+                                                    <span class="d-block fw-semibold">Bank Transfer</span>
+                                                    <small class="text-muted">Instant transfer</small>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="payment-method-card" data-method="ussd">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="payment_method" 
+                                                   id="methodUssd" value="ussd">
+                                            <label class="form-check-label d-flex align-items-center" for="methodUssd">
+                                                <img src="https://cdn-icons-png.flaticon.com/512/2038/2038854.png" 
+                                                     alt="USSD" style="width: 30px; height: 30px; object-fit: contain;" class="me-2">
+                                                <div>
+                                                    <span class="d-block fw-semibold">USSD</span>
+                                                    <small class="text-muted">Quick dial code</small>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="payment-method-card" data-method="qr">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="payment_method" 
+                                                   id="methodQr" value="qr">
+                                            <label class="form-check-label d-flex align-items-center" for="methodQr">
+                                                <img src="https://cdn-icons-png.flaticon.com/512/1341/1341632.png" 
+                                                     alt="QR" style="width: 30px; height: 30px; object-fit: contain;" class="me-2">
+                                                <div>
+                                                    <span class="d-block fw-semibold">QR Code</span>
+                                                    <small class="text-muted">Scan to pay</small>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Summary Card -->
+                        <div class="bg-light p-4 rounded-4 mb-4">
+                            <h6 class="fw-semibold mb-3">Transaction Summary</h6>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Amount:</span>
+                                <span class="fw-semibold" id="summaryAmount">₦1,000</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Transaction Fee:</span>
+                                <span class="fw-semibold text-success">Free</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <span class="fw-bold">Total:</span>
+                                <span class="fw-bold text-primary" id="summaryTotal">₦1,000</span>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg py-3" id="submitBtn">
+                                <i class="fas fa-lock me-2"></i>
+                                Proceed to Payment
+                            </button>
+                        </div>
+
+                        <!-- Security Notice -->
+                        <div class="text-center mt-3">
+                            <small class="text-muted">
+                                <i class="fas fa-shield-alt text-primary me-1"></i>
+                                Secured by Paystack. Your payment information is encrypted.
+                            </small>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar - Recent Transactions -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-history text-info me-2"></i>
+                        Recent Transactions
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_transactions %}
+                        <div class="list-group list-group-flush">
+                            {% for transaction in recent_transactions %}
+                                <div class="list-group-item border-0 py-3">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <div class="d-flex align-items-center mb-1">
+                                                <span class="badge bg-{% if transaction.status == 'success' %}success{% elif transaction.status == 'pending' %}warning{% else %}danger{% endif %} me-2">
+                                                    {{ transaction.status|title }}
+                                                </span>
+                                                <small class="text-muted">{{ transaction.created_at|date:"M d, Y" }}</small>
+                                            </div>
+                                            <span class="fw-semibold">{{ transaction.description|truncatechars:30 }}</span>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="fw-bold text-success">+₦{{ transaction.amount|floatformat:0|intcomma }}</span>
+                                            <br>
+                                            <small class="text-muted">{{ transaction.reference|truncatechars:8 }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="card-footer bg-white text-center">
+                            <a href="#" class="text-primary text-decoration-none small">View All Transactions</a>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-exchange-alt fa-3x text-muted mb-3 opacity-25"></i>
+                            <h6 class="fw-light">No transactions yet</h6>
+                            <p class="small text-muted">Your funding history will appear here</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Info Card -->
+            <div class="card bg-light border-0">
+                <div class="card-body p-4">
+                    <h6 class="fw-semibold mb-3">
+                        <i class="fas fa-info-circle text-primary me-2"></i>
+                        Important Information
+                    </h6>
+                    <ul class="list-unstyled small text-muted mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Minimum funding amount: ₦100
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            No transaction fees
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Funds credited instantly
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Secure payment processing
+                        </li>
+                        <li>
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            24/7 customer support
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Payment Method Cards */
+.payment-method-card {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.payment-method-card:hover {
+    border-color: #2563eb;
+    background: #f0f7ff;
+}
+
+.payment-method-card.active {
+    border-color: #2563eb;
+    background: #f0f7ff;
+}
+
+.payment-method-card .form-check {
+    margin: 0;
+}
+
+.payment-method-card .form-check-input:checked {
+    background-color: #2563eb;
+    border-color: #2563eb;
+}
+
+/* Quick Amount Buttons */
+.quick-amount {
+    min-width: 80px;
+    transition: all 0.3s;
+}
+
+.quick-amount:hover {
+    background-color: #2563eb;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.quick-amount.active {
+    background-color: #2563eb;
+    color: white;
+    border-color: #2563eb;
+}
+
+/* Loading State */
+.btn-loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.btn-loading .btn-text {
+    visibility: hidden;
+}
+
+.btn-loading::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    top: 50%;
+    left: 50%;
+    margin-left: -10px;
+    margin-top: -10px;
+    border: 2px solid white;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spinner 0.8s linear infinite;
+}
+
+@keyframes spinner {
+    to { transform: rotate(360deg); }
+}
+
+/* Animation */
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+    animation: slideIn 0.5s ease;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .payment-method-card {
+        margin-bottom: 0.5rem;
+    }
+    
+    .quick-amount {
+        min-width: 60px;
+        font-size: 0.9rem;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Quick amount selection
+    const amountInput = document.getElementById('amount');
+    const summaryAmount = document.getElementById('summaryAmount');
+    const summaryTotal = document.getElementById('summaryTotal');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // Format currency
+    function formatCurrency(amount) {
+        return '₦' + parseInt(amount).toLocaleString();
+    }
+    
+    // Update summary
+    function updateSummary() {
+        const amount = amountInput.value || 0;
+        summaryAmount.textContent = formatCurrency(amount);
+        summaryTotal.textContent = formatCurrency(amount);
+    }
+    
+    // Quick amount buttons
+    document.querySelectorAll('.quick-amount').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const amount = this.dataset.amount;
+            amountInput.value = amount;
+            updateSummary();
+            
+            // Highlight active button
+            document.querySelectorAll('.quick-amount').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+    
+    // Update summary on input change
+    amountInput.addEventListener('input', updateSummary);
+    
+    // Payment method selection
+    document.querySelectorAll('.payment-method-card').forEach(card => {
+        card.addEventListener('click', function() {
+            const radio = this.querySelector('input[type="radio"]');
+            radio.checked = true;
+            
+            // Update active class
+            document.querySelectorAll('.payment-method-card').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+    
+    // Form submission with loading state
+    const form = document.getElementById('fundWalletForm');
+    form.addEventListener('submit', function() {
+        submitBtn.classList.add('btn-loading');
+        submitBtn.innerHTML = '<span class="btn-text">Processing...</span>';
+    });
+    
+    // Initialize first quick amount as active
+    document.querySelector('.quick-amount[data-amount="1000"]').classList.add('active');
+});
+</script>
+{% endblock %}

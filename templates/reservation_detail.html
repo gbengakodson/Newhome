@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header {% if reservation.status == 'active' %}bg-success{% elif reservation.status == 'pending' %}bg-warning{% else %}bg-secondary{% endif %} text-white">
+                    <h4 class="mb-0">Reservation Details</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Status Banner -->
+                    <div class="alert
+                        {% if reservation.status == 'active' %}alert-success
+                        {% elif reservation.status == 'pending' %}alert-warning
+                        {% elif reservation.status == 'cancelled_by_tenant' or reservation.status == 'cancelled_by_landlord' %}alert-danger
+                        {% else %}alert-secondary{% endif %}">
+                        <h5 class="alert-heading">
+                            Status: {{ reservation.get_status_display }}
+                        </h5>
+                    </div>
+
+                    <!-- Property Info -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5>Property</h5>
+                            <p><strong>{{ reservation.property.title }}</strong></p>
+                            <p>{{ reservation.property.address }}, {{ reservation.property.city }}</p>
+                            <p>Monthly Rent: ₦{{ reservation.property.price|floatformat:0 }}</p>
+                            <p>Daily Fee: ₦{{ daily_fee|floatformat:2 }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Tenant</h5>
+                            <p><strong>{{ reservation.tenant.username }}</strong></p>
+                            <p>Email: {{ reservation.tenant.email }}</p>
+                            <p>Phone: {{ reservation.tenant.profile.phone|default:"Not provided" }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Escrow Info -->
+                    {% if escrow %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-lock"></i>
+                            <strong>Deposit Held:</strong> ₦{{ escrow.amount|floatformat:2 }}
+                            <br><small>20% of annual rent</small>
+                        </div>
+                    {% endif %}
+
+                    <!-- Reservation Stats -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0">Reservation Statistics</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Started:</th>
+                                    <td>{{ reservation.start_date|date:"F j, Y H:i"|default:"Not started" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Days Reserved:</th>
+                                    <td>{{ days_reserved }} days</td>
+                                </tr>
+                                <tr>
+                                    <th>Total Charged:</th>
+                                    <td>₦{{ total_charged|floatformat:2 }}</td>
+                                </tr>
+                                {% if is_tenant %}
+                                    <tr>
+                                        <th>Your Remaining Balance:</th>
+                                        <td>₦{{ remaining_balance|floatformat:2 }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Estimated Days Left:</th>
+                                        <td>
+                                            {% if daily_fee > 0 %}
+                                                {{ (remaining_balance / daily_fee)|floatformat:0 }} days
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                                <tr>
+                                    <th>Last Charged:</th>
+                                    <td>{{ reservation.last_charged_date|date:"F j, Y H:i"|default:"Never" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'property_detail' reservation.property.id %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Property
+                        </a>
+
+                        {% if reservation.status == 'pending' and is_landlord %}
+                            <a href="{% url 'manage_reservation' reservation.id %}" class="btn btn-primary">
+                                <i class="fas fa-check-circle"></i> Review Request
+                            </a>
+                        {% endif %}
+
+                        {% if reservation.status == 'active' %}
+                            <a href="{% url 'cancel_reservation' reservation.id %}"
+                               class="btn btn-danger"
+                               onclick="return confirm('Are you sure you want to cancel this reservation? Daily fees will stop.')">
+                                <i class="fas fa-times-circle"></i> Cancel Reservation
+                            </a>
+                        {% endif %}
+
+                        {% if reservation.status == 'pending' and is_tenant %}
+                            <a href="{% url 'cancel_reservation' reservation.id %}"
+                               class="btn btn-warning"
+                               onclick="return confirm('Cancel this reservation request?')">
+                                <i class="fas fa-times"></i> Cancel Request
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+</body>
+</html>

@@ -1,0 +1,1003 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block extra_css %}
+<!-- Add any additional CSS -->
+<style>
+    :root {
+        --primary-black: #1a1a1a;
+        --primary-blue: #2563eb;
+        --primary-white: #ffffff;
+        --secondary-gray: #f8fafc;
+        --accent-blue: #3b82f6;
+    }
+
+    /* Hero Banner */
+    .hero-banner {
+        position: relative;
+        min-height: 650px;
+        background: linear-gradient(135deg, var(--primary-black) 0%, #2d2d2d 100%);
+        margin-bottom: 3rem;
+        overflow: hidden;
+    }
+
+    .hero-banner::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        background: url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80') no-repeat center center;
+        background-size: cover;
+        opacity: 0.15;
+        mix-blend-mode: overlay;
+    }
+
+    .hero-container {
+        position: relative;
+        z-index: 2;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 4rem 2rem;
+        display: flex;
+        gap: 3rem;
+        align-items: center;
+        min-height: 650px;
+    }
+
+    /* Left Content Area */
+    .hero-left {
+        flex: 1;
+        color: var(--primary-white);
+        animation: fadeInLeft 0.8s ease;
+    }
+
+    .hero-slogan-large {
+        font-size: 3.5rem;
+        font-weight: 700;
+        line-height: 1.2;
+        margin-bottom: 1.5rem;
+    }
+
+    .hero-slogan-large span {
+        color: var(--primary-blue);
+        display: block;
+        font-size: 4rem;
+    }
+
+    .hero-description {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+        max-width: 500px;
+    }
+
+    /* Logo and Tagline */
+    .hero-logo-area {
+        margin-bottom: 2rem;
+    }
+
+    .hero-logo {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--primary-white);
+        margin-bottom: 0.5rem;
+    }
+
+    .hero-logo span {
+        color: var(--primary-blue);
+    }
+
+    .hero-tagline {
+        font-size: 1.1rem;
+        opacity: 0.8;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .hero-tagline i {
+        color: var(--primary-blue);
+    }
+
+    /* Category Pills */
+    .category-pills {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+    }
+
+    .category-pill {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 0.75rem 2rem;
+        border-radius: 50px;
+        color: var(--primary-white);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .category-pill:hover {
+        background: var(--primary-blue);
+        border-color: var(--primary-blue);
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
+    }
+
+    .category-pill i {
+        font-size: 1rem;
+    }
+
+    /* Right Portrait Search Rectangle */
+    .hero-right {
+        width: 380px;
+        background: var(--primary-white);
+        border-radius: 30px;
+        padding: 2rem;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        animation: fadeInRight 0.8s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-right::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: linear-gradient(90deg, var(--primary-blue), var(--primary-black));
+    }
+
+    .search-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .search-header h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary-black);
+        margin-bottom: 0.5rem;
+    }
+
+    .search-header p {
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .search-form-compact {
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+    }
+
+    .search-field {
+        position: relative;
+    }
+
+    .search-field label {
+        position: absolute;
+        top: -8px;
+        left: 15px;
+        background: var(--primary-white);
+        padding: 0 8px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--primary-blue);
+        z-index: 1;
+    }
+
+    .search-field input,
+    .search-field select {
+        width: 100%;
+        padding: 1rem 1.2rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 15px;
+        font-size: 0.95rem;
+        transition: all 0.3s;
+        background: var(--primary-white);
+        color: var(--primary-black);
+    }
+
+    .search-field input:focus,
+    .search-field select:focus {
+        border-color: var(--primary-blue);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .search-field i {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--primary-blue);
+        pointer-events: none;
+    }
+
+    .search-btn-compact {
+        background: var(--primary-blue);
+        color: var(--primary-white);
+        border: none;
+        padding: 1.2rem;
+        border-radius: 15px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .search-btn-compact:hover {
+        background: #1d4ed8;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
+    }
+
+    /* Popular Tags */
+    .popular-tags {
+        margin-top: 1.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+    }
+
+    .popular-tag {
+        background: var(--secondary-gray);
+        color: var(--primary-black);
+        padding: 0.4rem 1rem;
+        border-radius: 30px;
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+    }
+
+    .popular-tag:hover {
+        background: var(--primary-blue);
+        color: var(--primary-white);
+        border-color: var(--primary-blue);
+    }
+
+    /* Breadcrumb */
+    .breadcrumb-wrapper {
+        background: var(--secondary-gray);
+        padding: 1rem 0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .breadcrumb-custom {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .breadcrumb-custom a {
+        color: var(--primary-black);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s;
+    }
+
+    .breadcrumb-custom a:hover {
+        color: var(--primary-blue);
+    }
+
+    .breadcrumb-custom .separator {
+        color: #94a3b8;
+    }
+
+    .breadcrumb-custom .active {
+        color: var(--primary-blue);
+        font-weight: 600;
+    }
+
+    /* Featured Properties */
+    .featured-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    /* Property Cards */
+    .property-card {
+        background: var(--primary-white);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+        height: 100%;
+        border: 1px solid #e2e8f0;
+    }
+
+    .property-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(37, 99, 235, 0.1);
+        border-color: var(--primary-blue);
+    }
+
+    .property-image {
+        position: relative;
+        height: 240px;
+        overflow: hidden;
+    }
+
+    .property-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+
+    .property-card:hover .property-image img {
+        transform: scale(1.1);
+    }
+
+    .property-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        padding: 0.5rem 1rem;
+        border-radius: 30px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        z-index: 2;
+    }
+
+    .badge-vacant {
+        background: var(--primary-blue);
+        color: var(--primary-white);
+    }
+
+    .badge-occupied {
+        background: var(--primary-black);
+        color: var(--primary-white);
+    }
+
+    .property-content {
+        padding: 1.5rem;
+    }
+
+    .property-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--primary-black);
+        margin-bottom: 0.5rem;
+    }
+
+    .property-location {
+        color: #64748b;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .property-location i {
+        color: var(--primary-blue);
+    }
+
+    .property-price {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary-blue);
+        margin-bottom: 1rem;
+    }
+
+    .property-price small {
+        font-size: 0.9rem;
+        font-weight: 400;
+        color: #64748b;
+    }
+
+    .property-features {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem 0;
+        border-top: 1px solid #e2e8f0;
+        border-bottom: 1px solid #e2e8f0;
+        margin-bottom: 1rem;
+    }
+
+    .property-feature {
+        flex: 1;
+        text-align: center;
+        font-size: 0.85rem;
+        color: #64748b;
+    }
+
+    .property-feature i {
+        color: var(--primary-blue);
+        display: block;
+        margin-bottom: 0.25rem;
+        font-size: 1.2rem;
+    }
+
+    .property-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .btn-view {
+        background: var(--secondary-gray);
+        color: var(--primary-black);
+        padding: 0.5rem 1.5rem;
+        border-radius: 30px;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.2s;
+        border: 1px solid #e2e8f0;
+    }
+
+    .btn-view:hover {
+        background: var(--primary-blue);
+        color: var(--primary-white);
+        border-color: var(--primary-blue);
+    }
+
+    /* Section Headers */
+    .section-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .section-title {
+        font-size: 2.5rem;
+        font-weight: 600;
+        color: var(--primary-black);
+        margin-bottom: 0.5rem;
+        position: relative;
+        display: inline-block;
+    }
+
+    .section-title::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 4px;
+        background: var(--primary-blue);
+        border-radius: 2px;
+    }
+
+    /* Animations */
+    @keyframes fadeInLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes fadeInRight {
+        from {
+            opacity: 0;
+            transform: translateX(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .hero-container {
+            flex-direction: column;
+            text-align: center;
+            padding: 3rem 1.5rem;
+        }
+
+        .hero-slogan-large span {
+            display: inline;
+        }
+
+        .hero-description {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .category-pills {
+            justify-content: center;
+        }
+
+        .hero-right {
+            width: 100%;
+            max-width: 400px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .hero-slogan-large {
+            font-size: 2.5rem;
+        }
+
+        .hero-slogan-large span {
+            font-size: 3rem;
+        }
+
+        .featured-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Banner with Left Content and Right Portrait Search -->
+<!-- home section start -->
+    <section class="home-section layout-1 layout-6">
+        <div class="home-main">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-7">
+                        <div class="container">
+                            <div class="home-left">
+                                <div>
+                                    <div class="home-slider-1 arrow-light slick-shadow">
+                                        <div>
+                                            <div class="home-content">
+                                                <div>
+                                                    <img src="../logo will be here" class="img-fluid m-0"
+                                                        alt="">
+                                                    <h1>THE</h1>
+                                                    <h1>PERFECT HOME</h1>
+                                                    <h1>FOR YOU!</h1>
+                                                    <h1 style="font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;"></h1>
+                                                    <a href="#"
+                                                        class="btn btn-gradient color-6">homigram.co</a>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                    <div class="looking-icons">
+                                        <h5>What are you looking for?</h5>
+                                        <ul>
+                                            <li>
+                                                <a href="{% url 'property_list' %}?purpose=buy" class="looking-icon">
+                                                    <svg class="property-svg">
+                                                        <use xlink:href="{% url 'property_list' %}?purpose=buy"></use>
+                                                    </svg>
+                                                    <h6>Buy a Land</h6>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="{% url 'property_list' %}?purpose=sell" class="looking-icon">
+                                                    <svg class="property-svg">
+                                                        <use xlink:href="{% url 'property_list' %}?purpose=sell"></use>
+                                                    </svg>
+                                                    <h6>Sell a Land</h6>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="{% url 'property_list' %}?purpose=rent" class="looking-icon">
+                                                    <svg class="property-svg">
+                                                        <use xlink:href="{% url 'property_list' %}?purpose=rent"></use>
+                                                    </svg>
+                                                    <h6>Rent a House</h6>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-4 col-lg-5">
+                        <div class="home-search-6">
+                            <div class="vertical-search">
+                                <div class="left-sidebar">
+                                    <form action="{% url 'property_list' %}" method="get" class="row gx-3">
+                                        <div class="col-lg-12">
+                                            <div class="form-group">
+                                                <label>Property Status</label>
+                                                <div class="dropdown">
+                                                    <span class="dropdown-toggle font-rubik"
+                                                        data-bs-toggle="dropdown"><span>Property Status</span> <i
+                                                            class="fas fa-angle-down"></i></span>
+                                                    <div class="dropdown-menu text-start">
+                                                        <a class="dropdown-item" href="javascript:void(0)">Property
+                                                            Status</a>
+                                                        <a class="dropdown-item" href="javascript:void(0)">For Rent</a>
+                                                        <a class="dropdown-item" href="javascript:void(0)">For Sale</a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-12">
+                                            <div class="form-group">
+                                                <label>Property Type</label>
+                                                <div class="dropdown">
+                                                    <span class="dropdown-toggle font-rubik"
+                                                        data-bs-toggle="dropdown"><span>Property Type</span> <i
+                                                            class="fas fa-angle-down"></i></span>
+                                                    <div class="dropdown-menu text-start">
+                                                        <a class="dropdown-item" href="javascript:void(0)">Property Type</a>
+                                                        <a class="dropdown-item" href="javascript:void(0)">Apartment</a>
+                                                        <a class="dropdown-item" href="javascript:void(0)">Family House</a>
+                                                        <a class="dropdown-item" href="javascript:void(0)">Cottage</a>
+                                                        <a class="dropdown-item" href="javascript:void(0)">Condominium</a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div class="form-group">
+                                                <label>Rooms</label>
+                                                <div class="dropdown">
+                                                    <span class="dropdown-toggle font-rubik" data-bs-toggle="dropdown"><span>Max
+                                                            Rooms</span> <i class="fas fa-angle-down"></i></span>
+                                                    <div class="dropdown-menu text-start">
+                                                        <a class="dropdown-item" href="javascript:void(0)">Max Rooms</a>
+                                                        <a class="dropdown-item" href="javascript:void(0)">1</a>
+                                                        <a class="dropdown-item" href="javascript:void(0)">2</a>
+                                                        <a class="dropdown-item" href="javascript:void(0)">3</a>
+                                                        <a class="dropdown-item" href="javascript:void(0)">4</a>
+                                                        <a class="dropdown-item" href="javascript:void(0)">5</a>
+                                                        <a class="dropdown-item" href="javascript:void(0)">6</a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="form-group">
+                                                <label>Bed</label>
+                                                <div class="dropdown">
+                                                    <span class="dropdown-toggle font-rubik"
+                                                        data-bs-toggle="dropdown"><span>Bed</span> <i
+                                                            class="fas fa-angle-down"></i></span>
+                                                    <div class="dropdown-menu text-start">
+                                                        <a class="dropdown-item" href="javascript:void(0)">Bed</a>
+                                                        <a class="dropdown-item" href="javascript:void(0)">1</a>
+                                                        <a class="dropdown-item" href="javascript:void(0)">2</a>
+                                                        <a class="dropdown-item" href="javascript:void(0)">3</a>
+                                                        <a class="dropdown-item" href="javascript:void(0)">4</a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="form-group">
+                                                <label>Bath</label>
+                                                <div class="dropdown">
+                                                    <span class="dropdown-toggle font-rubik"
+                                                        data-bs-toggle="dropdown"><span>Bath</span> <i
+                                                            class="fas fa-angle-down"></i></span>
+                                                    <div class="dropdown-menu text-start">
+                                                        <a class="dropdown-item" href="javascript:void(0)">Bath</a>
+                                                        <a class="dropdown-item" href="javascript:void(0)">1</a>
+                                                        <a class="dropdown-item" href="javascript:void(0)">2</a>
+                                                        <a class="dropdown-item" href="javascript:void(0)">3</a>
+                                                        <a class="dropdown-item" href="javascript:void(0)">4</a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div class="form-group">
+                                                <label>Location</label>
+                                                <div class="dropdown">
+                                                    <span class="dropdown-toggle font-rubik"
+                                                        data-bs-toggle="dropdown"><span>location</span> <i
+                                                            class="fas fa-angle-down"></i></span>
+                                                    <div class="dropdown-menu text-start">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-12 col-sm-6">
+                                            <div class="form-group">
+                                                <div class="price-range">
+                                                    <label for="amount">Price : </label>
+                                                    <input type="text" id="amount" readonly>
+                                                    <div id="slider-range" class="theme-range-3"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-12 col-sm-6">
+                                            <div class="form-group">
+                                                <div class="price-range">
+                                                    <label for="amount">Area : </label>
+                                                    <input type="text" id="amount1" readonly>
+                                                    <div id="slider-range1" class="theme-range-3"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-12">
+                                            <button type="submit" class="btn btn-gradient color-6 mt-3">Search</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- home section end -->
+
+
+<!-- Featured Properties -->
+<section class="py-5">
+    <div class="container">
+        <div class="section-header">
+
+            <p class="section-subtitle text-muted">Weather its a Hut in the villa or a luxurious Apartmet in Town, We have it on Homigram!</p>
+        </div>
+
+        <div class="row g-4">
+            {% for property in featured_properties %}
+            <div class="col-lg-4 col-md-6">
+                <div class="card property-card h-100 border-0 shadow-sm">
+                    <!-- Property Image -->
+                    <div class="position-relative">
+                        {% if property.images.first %}
+                            <img src="{{ property.images.first.image.url }}"
+                                 class="card-img-top"
+                                 alt="{{ property.title }}"
+                                 style="height: 200px; object-fit: cover;">
+                        {% else %}
+                            <div class="bg-secondary text-white d-flex align-items-center justify-content-center"
+                                 style="height: 200px;">
+                                <i class="fas fa-home fa-3x"></i>
+                            </div>
+                        {% endif %}
+
+                        <!-- Status Badge -->
+                        <span class="position-absolute top-0 end-0 m-2 badge bg-{% if property.occupancy_status == 'vacant' %}success{% else %}danger{% endif %}">
+                            {{ property.occupancy_status|title }}
+                        </span>
+                    </div>
+
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold">{{ property.title|truncatechars:25 }}</h5>
+                        <p class="card-text text-muted small mb-2">
+                            <i class="fas fa-map-marker-alt text-primary me-1"></i>
+                            {{ property.city }}, {{ property.state }}
+                        </p>
+                        <h6 class="text-primary fw-bold mb-2">₦{{ property.price|floatformat:0|intcomma }}/month</h6>
+
+                        <!-- Quick Specs -->
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="small"><i class="fas fa-bed text-primary me-1"></i> {{ property.bedrooms }} beds</span>
+                            <span class="small"><i class="fas fa-bath text-primary me-1"></i> {{ property.bathrooms|floatformat:"0" }} baths</span>
+                            <span class="small"><i class="fas fa-arrows-alt text-primary me-1"></i> {{ property.sqft }} sqft</span>
+                        </div>
+
+                        <!-- Features -->
+                        <div class="mb-3">
+                            {% for feature in property.features.all|slice:":3" %}
+                                <span class="badge bg-light text-dark me-1">
+                                    <i class="fas {{ feature.icon }} text-primary"></i>
+                                </span>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Action Button with Security Checks -->
+                        {% if user.is_authenticated %}
+                            {% if user.profile.user_type == 'tenant' %}
+                                {% if property.id in paid_inspections %}
+                                    <a href="{% url 'property_detail' property.id %}" class="btn btn-success w-100">
+                                        <i class="fas fa-eye me-2"></i>Inspect
+                                    </a>
+                                {% else %}
+                                    {% if user.profile.email_verified and user.profile.is_verified %}
+                                        {% if user.profile.wallet_balance >= property.inspection_fee %}
+                                            <a href="{% url 'pay_inspection_before_view' property.id %}" class="btn btn-primary w-100">
+                                                <i class="fas fa-lock-open me-2"></i>Inspect (₦{{ property.inspection_fee|floatformat:0 }})
+                                            </a>
+                                        {% else %}
+                                            <button class="btn btn-secondary w-100" disabled
+                                                    title="Insufficient balance. Please fund your wallet.">
+                                                <i class="fas fa-exclamation-triangle me-2"></i>Insufficient Balance
+                                            </button>
+                                            <small class="text-muted d-block text-center mt-1">
+                                                <a href="{% url 'fund_wallet' %}" class="text-primary">Fund wallet</a>
+                                            </small>
+                                        {% endif %}
+                                    {% else %}
+                                        <button class="btn btn-secondary w-100" disabled
+                                                title="Complete verification to inspect properties">
+                                            <i class="fas fa-lock me-2"></i>Verification Required
+                                        </button>
+                                        <small class="text-muted d-block text-center mt-1">
+                                            <a href="{% url 'submit_verification' %}" class="text-primary">Verify account</a>
+                                        </small>
+                                    {% endif %}
+                                {% endif %}
+                            {% elif user.profile.user_type == 'landlord' %}
+                                <a href="{% url 'property_detail' property.id %}" class="btn btn-outline-primary w-100">
+                                    <i class="fas fa-eye me-2"></i>View Details
+                                </a>
+                            {% else %}
+                                <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-outline-primary w-100">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Login to View
+                                </a>
+                            {% endif %}
+                        {% else %}
+                            <a href="{% url 'login' %}?next={% url 'property_detail' property.id %}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-sign-in-alt me-2"></i>Login to View
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center py-5">
+                <i class="fas fa-home fa-4x text-muted mb-3"></i>
+                <h4>No Properties Available</h4>
+                <p class="text-muted">Check back later for new listings.</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- View All Button -->
+        <div class="text-center mt-5">
+            <a href="{% url 'property_list' %}" class="btn btn-primary btn-lg px-5 py-3 rounded-pill">
+                View All Properties <i class="fas fa-arrow-right ms-2"></i>
+            </a>
+        </div>
+    </div>
+</section>
+<!-- Keep your existing categories, how it works, CTA sections here -->
+<!-- How It Works -->
+<section class="py-5">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">How It Works</h2>
+            <p class="section-subtitle">Simple steps to find your perfect home</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 100px; height: 100px;">
+                        <span class="display-4 text-primary">1</span>
+                    </div>
+                    <h5>Browse Properties</h5>
+                    <p class="text-muted">Explore our wide range of properties with detailed information</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 100px; height: 100px;">
+                        <span class="display-4 text-primary">2</span>
+                    </div>
+                    <h5>Pay Inspection Fee</h5>
+                    <p class="text-muted">Small fee to access full property details and contact landlord</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 100px; height: 100px;">
+                        <span class="display-4 text-primary">3</span>
+                    </div>
+                    <h5>Express Interest</h5>
+                    <p class="text-muted">Let the landlord know you're interested in the property</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 100px; height: 100px;">
+                        <span class="display-4 text-primary">4</span>
+                    </div>
+                    <h5>Secure Your Home</h5>
+                    <p class="text-muted">Pay deposit and complete the rental process</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <div class="container">
+        <h2 class="cta-title">Ready to Find Your Dream Home?</h2>
+        <p class="cta-subtitle">Join thousands of satisfied tenants who found their perfect home through our platform</p>
+
+        <div class="cta-buttons">
+            {% if user.is_authenticated %}
+                {% if user.profile.user_type == 'tenant' %}
+                    <a href="{% url 'property_list' %}" class="btn-cta btn-cta-primary">Browse Properties</a>
+                {% elif user.profile.user_type == 'landlord' %}
+                    <a href="{% url 'add_property' %}" class="btn-cta btn-cta-primary">List Your Property</a>
+                {% endif %}
+            {% else %}
+                <a href="#" class="btn-cta btn-cta-primary" data-bs-toggle="modal" data-bs-target="#authModal" onclick="switchAuthTab('signup')">Get Started</a>
+                <a href="#" class="btn-cta btn-cta-outline" data-bs-toggle="modal" data-bs-target="#authModal" onclick="switchAuthTab('login')">Sign In</a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Newsletter Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 text-center">
+                <h3 class="mb-3">Subscribe to Our Newsletter</h3>
+                <p class="text-muted mb-4">Get the latest property listings and exclusive deals directly in your inbox</p>
+
+                <form class="row g-2 justify-content-center">
+                    <div class="col-md-8">
+                        <input type="email" class="form-control form-control-lg" placeholder="Enter your email address" style="border-radius: 50px;">
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary btn-lg w-100" style="border-radius: 50px;">
+                            Subscribe
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+// Toggle favorite button
+function toggleFavorite(button) {
+    const icon = button.querySelector('i');
+    if (icon.classList.contains('far')) {
+        icon.classList.remove('far');
+        icon.classList.add('fas');
+        button.style.background = '#ef4444';
+        button.style.color = 'white';
+    } else {
+        icon.classList.remove('fas');
+        icon.classList.add('far');
+        button.style.background = 'white';
+        button.style.color = '#1e293b';
+    }
+}
+
+// Animate stats counting (optional)
+function animateStats() {
+    const stats = document.querySelectorAll('.hero-section .fw-bold');
+    stats.forEach(stat => {
+        const target = parseInt(stat.innerText);
+        let current = 0;
+        const increment = target / 50;
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                stat.innerText = target + '+';
+                clearInterval(timer);
+            } else {
+                stat.innerText = Math.floor(current) + '+';
+            }
+        }, 30);
+    });
+}
+
+// Start animation when page loads
+document.addEventListener('DOMContentLoaded', animateStats);
+</script>
+{% endblock %}

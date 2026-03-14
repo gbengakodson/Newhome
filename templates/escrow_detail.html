@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Escrow Details - {{ property.title }}</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Status Banner -->
+                    <div class="alert {% if escrow.status == 'held' %}alert-info{% elif escrow.status == 'released_to_landlord' %}alert-success{% elif escrow.status == 'refunded_to_tenant' %}alert-warning{% else %}alert-danger{% endif %}">
+                        <h5 class="alert-heading">
+                            {% if escrow.status == 'held' %}
+                                <i class="fas fa-lock"></i> Funds Held in Escrow
+                            {% elif escrow.status == 'released_to_landlord' %}
+                                <i class="fas fa-check-circle"></i> Released to Landlord
+                            {% elif escrow.status == 'refunded_to_tenant' %}
+                                <i class="fas fa-undo"></i> Refunded to Tenant
+                            {% else %}
+                                <i class="fas fa-exclamation-triangle"></i> Disputed
+                            {% endif %}
+                        </h5>
+                        <p class="mb-0">
+                            Amount: <strong>₦{{ escrow.amount|floatformat:2 }}</strong>
+                            {% if escrow.released_at %}
+                                <br>Released: {{ escrow.released_at|date:"F j, Y H:i" }}
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <!-- Escrow Summary -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0">Tenant</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>{{ escrow.tenant.username }}</strong></p>
+                                    <p>Email: {{ escrow.tenant.email }}</p>
+                                    <p>Phone: {{ escrow.tenant.profile.phone|default:"Not provided" }}</p>
+                                    <p>
+                                        Approval Status:
+                                        {% if escrow.tenant_approved %}
+                                            <span class="badge bg-success">Approved</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Pending</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0">Landlord</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>{{ escrow.landlord.username }}</strong></p>
+                                    <p>Email: {{ escrow.landlord.email }}</p>
+                                    <p>Phone: {{ escrow.landlord.profile.phone|default:"Not provided" }}</p>
+                                    <p>
+                                        Approval Status:
+                                        {% if escrow.landlord_approved %}
+                                            <span class="badge bg-success">Approved</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Pending</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Approval Section -->
+                    {% if escrow.status == 'held' %}
+                        <div class="card mb-4">
+                            <div class="card-header bg-warning">
+                                <h5 class="mb-0">Release Approval</h5>
+                            </div>
+                            <div class="card-body">
+                                {% if is_tenant and not escrow.tenant_approved %}
+                                    <form method="post" action="{% url 'approve_escrow_release' escrow.id %}">
+                                        {% csrf_token %}
+                                        <p>As the tenant, you can approve releasing the deposit to the landlord once you've moved in and are satisfied.</p>
+                                        <button type="submit" class="btn btn-success">
+                                            <i class="fas fa-check"></i> Approve Release to Landlord
+                                        </button>
+                                    </form>
+                                {% elif is_landlord and not escrow.landlord_approved %}
+                                    <form method="post" action="{% url 'approve_escrow_release' escrow.id %}">
+                                        {% csrf_token %}
+                                        <p>As the landlord, you can approve releasing the deposit to the tenant if they decide not to move in.</p>
+                                        <button type="submit" class="btn btn-warning">
+                                            <i class="fas fa-undo"></i> Approve Refund to Tenant
+                                        </button>
+                                    </form>
+                                {% elif escrow.both_approved %}
+                                    <div class="alert alert-success">
+                                        <i class="fas fa-check-circle"></i>
+                                        Both parties have approved! Funds have been released.
+                                    </div>
+                                {% else %}
+                                    <p class="text-muted">Waiting for the other party to approve.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Evidence Upload Section -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">Evidence & Documentation</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Tenant Evidence</h6>
+                                    {% if escrow.tenant_evidence %}
+                                        <a href="{{ escrow.tenant_evidence.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-file"></i> View Uploaded Evidence
+                                        </a>
+                                    {% else %}
+                                        <p class="text-muted">No evidence uploaded</p>
+                                    {% endif %}
+
+                                    {% if is_tenant and escrow.status == 'held' %}
+                                        <form method="post" action="{% url 'upload_escrow_evidence' escrow.id %}" enctype="multipart/form-data" class="mt-2">
+                                            {% csrf_token %}
+                                            <label class="form-label">Upload Evidence (photos, documents)</label>
+                                            <input type="file" name="evidence" class="form-control form-control-sm" required>
+                                            <button type="submit" class="btn btn-sm btn-primary mt-2">Upload</button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+
+                                <div class="col-md-6">
+                                    <h6>Landlord Evidence</h6>
+                                    {% if escrow.landlord_evidence %}
+                                        <a href="{{ escrow.landlord_evidence.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-file"></i> View Uploaded Evidence
+                                        </a>
+                                    {% else %}
+                                        <p class="text-muted">No evidence uploaded</p>
+                                    {% endif %}
+
+                                    {% if is_landlord and escrow.status == 'held' %}
+                                        <form method="post" action="{% url 'upload_escrow_evidence' escrow.id %}" enctype="multipart/form-data" class="mt-2">
+                                            {% csrf_token %}
+                                            <label class="form-label">Upload Evidence (photos, documents)</label>
+                                            <input type="file" name="evidence" class="form-control form-control-sm" required>
+                                            <button type="submit" class="btn btn-sm btn-primary mt-2">Upload</button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'property_detail' property.id %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Property
+                        </a>
+
+                        {% if is_tenant and escrow.status == 'held' %}
+                            <a href="{% url 'request_occupancy' property.id %}" class="btn btn-primary">
+                                <i class="fas fa-home"></i> Request Occupancy
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+</body>
+</html>

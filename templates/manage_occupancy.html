@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-home"></i> Review Occupancy Request</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0">Property Details</h6>
+                                </div>
+                                <div class="card-body">
+                                    <h5>{{ property.title }}</h5>
+                                    <p>{{ property.address }}, {{ property.city }}</p>
+                                    <p><strong>Monthly Rent:</strong> ₦{{ property.price|floatformat:0 }}</p>
+                                    <p><strong>Current Status:</strong>
+                                        <span class="badge bg-info">{{ property.get_occupancy_status_display }}</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0">Tenant Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <h5>{{ request.tenant.username }}</h5>
+                                    <p><strong>Full Name:</strong> {{ request.tenant_full_name }}</p>
+                                    <p><strong>Email:</strong> {{ request.tenant_email }}</p>
+                                    <p><strong>Phone:</strong> {{ request.tenant_phone }}</p>
+                                    <p><strong>Occupation:</strong> {{ request.tenant_occupation }}</p>
+                                    <p><strong>Marital Status:</strong> {{ request.get_tenant_marital_status_display }}</p>
+                                    <p><strong>Religion:</strong> {{ request.get_tenant_religion_display }}</p>
+                                    <p><strong>State of Origin:</strong> {{ request.tenant_state_of_origin }}</p>
+                                    <p><strong>Verified:</strong>
+                                        {% if request.tenant.profile.is_verified %}
+                                            <span class="badge bg-success">Yes</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">No</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Escrow Information -->
+                    {% with escrow=property.escrows.filter(tenant=request.tenant).first %}
+                        {% if escrow %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-lock"></i>
+                                <strong>Deposit Held in Escrow:</strong> ₦{{ escrow.amount|floatformat:2 }}
+                                <br><small>20% of annual rent (₦{{ escrow.annual_rent|floatformat:0 }})</small>
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Confirmation Required:</strong> Before approving, verify that the tenant has paid the full rent OFFLINE.
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="confirm_payment" required>
+                            <label class="form-check-label" for="confirm_payment">
+                                I confirm that the tenant has paid the full rent offline.
+                            </label>
+                        </div>
+
+                        <div class="d-flex justify-content-center gap-3">
+                            <button type="submit" name="action" value="approve" class="btn btn-success">
+                                <i class="fas fa-check"></i> Approve Occupancy
+                            </button>
+
+                            <button type="submit" name="action" value="reject" class="btn btn-danger">
+                                <i class="fas fa-times"></i> Reject Request
+                            </button>
+
+                            <a href="{% url 'landlord_dashboard' %}" class="btn btn-secondary">
+                                Back
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+</body>
+</html>

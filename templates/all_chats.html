@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="fw-bold">
+                <i class="fas fa-comments me-2 text-primary"></i>
+                {% if is_landlord %}Conversations with Tenants{% else %}Your Conversations{% endif %}
+            </h2>
+            <p class="text-muted">All your messages in one place</p>
+        </div>
+    </div>
+
+    <!-- Conversations List -->
+    <div class="row">
+        <div class="col-md-12">
+            {% if conversations %}
+                <div class="list-group">
+                    {% for conv in conversations %}
+                    <a href="{% url 'chat_with_landlord' conv.property.id %}{% if is_landlord %}?tenant={{ conv.partner.id }}{% endif %}"
+                       class="list-group-item list-group-item-action p-3 {% if conv.unread_count > 0 %}bg-light{% endif %}">
+                        <div class="d-flex align-items-center">
+                            <!-- Avatar -->
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3"
+                                 style="width: 50px; height: 50px; font-size: 1.2rem; font-weight: bold;">
+                                {{ conv.partner.username|first|upper }}
+                            </div>
+
+                            <!-- Conversation Info -->
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <h6 class="mb-0 fw-bold">
+                                        {{ conv.partner.get_full_name|default:conv.partner.username }}
+                                        {% if conv.unread_count > 0 %}
+                                            <span class="badge bg-danger ms-2">{{ conv.unread_count }} new</span>
+                                        {% endif %}
+                                    </h6>
+                                    <small class="text-muted">
+                                        {{ conv.last_message_time|date:"M d, Y H:i" }}
+                                    </small>
+                                </div>
+
+                                <p class="mb-1 text-truncate" style="max-width: 500px;">
+                                    <span class="fw-semibold">{{ conv.property.title }}</span> -
+                                    {{ conv.latest_message.message|truncatechars:50 }}
+                                </p>
+
+                                <small class="text-muted">
+                                    <i class="fas fa-map-marker-alt me-1"></i> {{ conv.property.city }}
+                                </small>
+                            </div>
+
+                            <!-- Arrow Icon -->
+                            <i class="fas fa-chevron-right text-muted ms-3"></i>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <!-- Empty State -->
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-comments fa-5x text-muted opacity-25"></i>
+                    </div>
+                    <h4 class="fw-light mb-3">No conversations yet</h4>
+                    <p class="text-muted mb-4">
+                        {% if is_landlord %}
+                            When tenants contact you about your properties, they'll appear here.
+                        {% else %}
+                            Start by browsing properties and contacting landlords.
+                        {% endif %}
+                    </p>
+                    <a href="{% url 'property_list' %}" class="btn btn-primary btn-lg px-5">
+                        <i class="fas fa-search me-2"></i>Browse Properties
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

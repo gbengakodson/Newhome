@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h4 class="mb-0"><i class="fas fa-calendar-alt"></i> Request Reservation</h4>
+                </div>
+                <div class="card-body">
+                    <div class="property-summary mb-4">
+                        <h5>{{ property.title }}</h5>
+                        <p class="text-muted">{{ property.address }}, {{ property.city }}</p>
+                        <p><strong>Monthly Rent:</strong> ₦{{ property.price|floatformat:0 }}</p>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Reservation Details:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>You have paid the 20% deposit (₦{{ escrow.amount|floatformat:2 }})</li>
+                            <li><strong>Daily Fee:</strong> ₦{{ daily_fee|floatformat:2 }} will be charged every 24 hours</li>
+                            <li>The property will be marked as "Reserved" for others</li>
+                            <li>You can occupy later by paying full rent offline</li>
+                        </ul>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Important:</strong> Ensure you have sufficient wallet balance for daily fees. If balance runs out, your reservation may be cancelled.
+                    </div>
+
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>Your Current Balance:</th>
+                            <td class="text-end">₦{{ request.user.profile.wallet_balance|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <th>Daily Fee:</th>
+                            <td class="text-end">₦{{ daily_fee|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <th>Estimated Days Covered:</th>
+                            <td class="text-end">
+                                {% if daily_fee > 0 %}
+                                    {{ (request.user.profile.wallet_balance / daily_fee)|floatformat:0 }} days
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="confirm_daily" required>
+                            <label class="form-check-label" for="confirm_daily">
+                                I understand that ₦{{ daily_fee|floatformat:2 }} will be charged daily from my wallet.
+                            </label>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="confirm_terms" required>
+                            <label class="form-check-label" for="confirm_terms">
+                                I agree to the reservation terms and conditions.
+                            </label>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-warning btn-lg">
+                                <i class="fas fa-calendar-check"></i> Submit Reservation Request
+                            </button>
+                            <a href="{% url 'property_detail' property.id %}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+</body>
+</html>

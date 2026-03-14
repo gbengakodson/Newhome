@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>chat</title>
+</head>
+<body>
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'property_detail' property.id %}">{{ property.title }}</a></li>
+                    <li class="breadcrumb-item active">Chat with Tenants</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Tenant List -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Tenants</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for tenant in tenants %}
+                            <a href="?tenant={{ tenant.id }}"
+                               class="list-group-item list-group-item-action d-flex justify-content-between align-items-center
+                                      {% if selected_tenant.id == tenant.id %}active{% endif %}">
+                                <div>
+                                    <strong>{{ tenant.get_full_name|default:tenant.username }}</strong>
+                                    <br>
+                                    <small>
+                                        {% if tenant.interests.filter.property=property %}Interest sent{% endif %}
+                                        {% if tenant.reservations.filter.property=property %} • Reserved{% endif %}
+                                    </small>
+                                </div>
+                                {% with unread=tenant.received_messages.filter.sender=tenant recipient=user property=property is_read=False.count %}
+                                    {% if unread > 0 %}
+                                        <span class="badge bg-danger rounded-pill">{{ unread }}</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </a>
+                        {% empty %}
+                            <div class="list-group-item text-muted">
+                                No tenants have interacted with this property yet.
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="col-md-8">
+            {% if selected_tenant %}
+                <div class="card">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-comments"></i>
+                            Chat with {{ selected_tenant.get_full_name|default:selected_tenant.username }}
+                        </h5>
+                        <span class="badge bg-light text-dark" id="online-status">● Online</span>
+                    </div>
+
+                    <div class="card-body chat-container" style="height: 400px; overflow-y: auto;" id="chat-messages">
+                        {% for message in messages %}
+                            <div class="message mb-3 {% if message.sender == user %}text-end{% endif %}">
+                                <div class="d-inline-block {% if message.sender == user %}bg-primary text-white{% else %}bg-light{% endif %} rounded p-2" style="max-width: 70%;">
+                                    <small class="d-block {% if message.sender == user %}text-white-50{% else %}text-muted{% endif %}">
+                                        {{ message.sender.username }} - {{ message.timestamp|date:"H:i" }}
+                                    </small>
+                                    <p class="mb-0">{{ message.message }}</p>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="text-center text-muted py-5" id="no-messages">
+                                <i class="fas fa-comment-dots fa-3x mb-3"></i>
+                                <p>No messages yet. Start the conversation!</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="card-footer">
+                        <form id="message-form" class="d-flex gap-2">
+                            {% csrf_token %}
+                            <input type="hidden" name="property_id" value="{{ property.id }}">
+                            <input type="hidden" name="recipient_id" value="{{ selected_tenant.id }}">
+                            <input type="text"
+                                   name="message"
+                                   id="message-input"
+                                   class="form-control"
+                                   placeholder="Type your message..."
+                                   required>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Send
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% else %}
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-comment-dots fa-4x text-muted mb-3"></i>
+                        <h5>Select a tenant to start chatting</h5>
+                        <p class="text-muted">Choose a tenant from the list on the left</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if selected_tenant %}
+<script>
+let lastMessageId = 0;
+let propertyId = {{ property.id }};
+let otherUserId = {{ selected_tenant.id }};
+
+// Scroll to bottom of chat
+function scrollToBottom() {
+    const container = document.getElementById('chat-messages');
+    container.scrollTop = container.scrollHeight;
+}
+
+// Format timestamp
+function formatTime() {
+    const now = new Date();
+    return now.getHours().toString().padStart(2, '0') + ':' +
+           now.getMinutes().toString().padStart(2, '0');
+}
+
+// Add message to chat
+function addMessage(message, isMe) {
+    const container = document.getElementById('chat-messages');
+    const noMessages = document.getElementById('no-messages');
+    if (noMessages) noMessages.remove();
+
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message mb-3 ${isMe ? 'text-end' : ''}`;
+    messageDiv.innerHTML = `
+        <div class="d-inline-block ${isMe ? 'bg-primary text-white' : 'bg-light'} rounded p-2" style="max-width: 70%;">
+            <small class="d-block ${isMe ? 'text-white-50' : 'text-muted'}">${message.sender} - ${message.timestamp}</small>
+            <p class="mb-0">${message.message}</p>
+        </div>
+    `;
+    container.appendChild(messageDiv);
+
+    if (parseInt(message.id) > lastMessageId) {
+        lastMessageId = parseInt(message.id);
+    }
+
+    scrollToBottom();
+}
+
+// Load new messages
+function loadNewMessages() {
+    fetch(`/chat/messages/${propertyId}/${otherUserId}/?last_id=${lastMessageId}`)
+        .then(response => response.json())
+        .then(data => {
+            data.messages.forEach(msg => {
+                addMessage(msg, msg.is_me);
+            });
+        });
+}
+
+// Send message
+document.getElementById('message-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const input = document.getElementById('message-input');
+    const message = input.value.trim();
+
+    if (!message) return;
+
+    const formData = new FormData();
+    formData.append('property_id', propertyId);
+    formData.append('recipient_id', otherUserId);
+    formData.append('message', message);
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+    fetch('{% url "send_chat_message" %}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            input.value = '';
+            addMessage({
+                id: data.message_id,
+                message: data.message,
+                sender: 'You',
+                timestamp: formatTime()
+            }, true);
+        }
+    });
+});
+
+// Poll for new messages every 3 seconds
+setInterval(loadNewMessages, 3000);
+
+// Initial scroll to bottom
+scrollToBottom();
+
+// Set initial last message ID
+{% if messages %}
+    lastMessageId = {{ messages.last.id }};
+{% endif %}
+</script>
+{% endif %}
+
+<style>
+.chat-container {
+    background-color: #f8f9fa;
+}
+.message {
+    transition: all 0.3s;
+}
+.list-group-item.active {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+</style>
+{% endblock %}
+
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-home"></i> Request Occupancy</h4>
+                </div>
+                <div class="card-body">
+                    <div class="property-summary mb-4">
+                        <h5>{{ property.title }}</h5>
+                        <p class="text-muted">{{ property.address }}, {{ property.city }}</p>
+                        <p><strong>Monthly Rent:</strong> ₦{{ property.price|floatformat:0 }}</p>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Before you proceed:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>You have paid the 20% deposit (₦{{ escrow.amount|floatformat:2 }})</li>
+                            <li>You must have paid the full rent OFFLINE to the landlord</li>
+                            <li>The landlord will verify your payment before approving</li>
+                        </ul>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Important:</strong> Your deposit will be held in escrow until you move out and both parties approve its release.
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="confirm_offline" required>
+                            <label class="form-check-label" for="confirm_offline">
+                                I confirm that I have paid the full rent offline to the landlord.
+                            </label>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="confirm_terms" required>
+                            <label class="form-check-label" for="confirm_terms">
+                                I agree to the terms and conditions of occupancy.
+                            </label>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-check-circle"></i> Submit Occupancy Request
+                            </button>
+                            <a href="{% url 'property_detail' property.id %}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+</body>
+</html>

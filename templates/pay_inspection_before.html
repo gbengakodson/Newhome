@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Get access!</h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <h5>{{ property.title }}</h5>
+                        <p class="text-muted">{{ property.city }}, {{ property.state }}</p>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Pay ₦{{ fee|floatformat:2 }}</strong>
+                        <p class="mb-0 mt-2">For 24-hour access.</p>
+                    </div>
+
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>Your Balance:</th>
+                            <td class="text-end">₦{{ current_balance|floatformat:2 }}</td>
+                        </tr>
+                        <tr class="table-primary">
+                            <th>Balance After Payment:</th>
+                            <td class="text-end"><strong>₦{{ new_balance|floatformat:2 }}</strong></td>
+                        </tr>
+                    </table>
+
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="confirm" required>
+                            <label class="form-check-label" for="confirm">
+                                I understand this payment gives me 24-hour access.
+                            </label>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-lock-open"></i> Pay ₦{{ fee|floatformat:2 }}
+                            </button>
+                            <a href="{% url 'property_list' %}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+
+                            {% if is_renewal %}
+                             <div class="alert alert-warning">
+                                 <i class="fas fa-clock"></i>
+                                <strong>Previous access expired.</strong>
+                                <p class="mb-0 mt-2">Renew access.</p>
+                             </div>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

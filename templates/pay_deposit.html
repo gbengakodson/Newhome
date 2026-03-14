@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Pay Security Deposit</h4>
+                </div>
+                <div class="card-body">
+                    <div class="property-summary mb-4">
+                        <h5>{{ property.title }}</h5>
+                        <p class="text-muted">{{ property.address }}, {{ property.city }}</p>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <strong>Deposit Required: 20% of Annual Rent</strong>
+                        <table class="table table-sm mt-3 mb-0">
+                            <tr>
+                                <th>Monthly Rent:</th>
+                                <td class="text-end">₦{{ monthly_rent|floatformat:0 }}</td>
+                            </tr>
+                            <tr>
+                                <th>Annual Rent:</th>
+                                <td class="text-end">₦{{ annual_rent|floatformat:0 }}</td>
+                            </tr>
+                            <tr class="table-primary">
+                                <th>Deposit Amount (20%):</th>
+                                <td class="text-end"><strong>₦{{ deposit_amount|floatformat:2 }}</strong></td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>What happens next?</strong>
+                        <ul class="mb-0 mt-2">
+                            <li><strong>Occupy:</strong> Pay rent offline to landlord, then move in immediately</li>
+                            <li><strong>Reserve:</strong> Pay daily fee (rent/365) until you move in</li>
+                        </ul>
+                    </div>
+
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>Your Balance:</th>
+                            <td class="text-end">₦{{ current_balance|floatformat:2 }}</td>
+                        </tr>
+                        <tr class="table-primary">
+                            <th>Balance After Payment:</th>
+                            <td class="text-end"><strong>₦{{ new_balance|floatformat:2 }}</strong></td>
+                        </tr>
+                    </table>
+
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="d-grid gap-3">
+                            <button type="submit" name="escrow_type" value="occupancy" class="btn btn-success btn-lg">
+                                <i class="fas fa-home"></i> Pay & Request Occupancy
+                            </button>
+
+                            <button type="submit" name="escrow_type" value="reservation" class="btn btn-warning btn-lg">
+                                <i class="fas fa-calendar-alt"></i> Pay & Request Reservation
+                            </button>
+
+                            <a href="{% url 'property_detail' property.id %}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+</body>
+</html>

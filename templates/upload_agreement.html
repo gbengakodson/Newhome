@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<!-- In add_property.html.html or edit_property.html -->
+<div class="mb-3">
+    <label for="{{ form.rental_agreement.id_for_label }}" class="form-label">Rental Agreement (PDF)</label>
+    {{ form.rental_agreement }}
+    {% if property.rental_agreement %}
+        <div class="mt-2">
+            <a href="{{ property.rental_agreement.url }}" target="_blank" class="btn btn-sm btn-info">
+                <i class="fas fa-file-pdf"></i> View Current Agreement
+            </a>
+        </div>
+    {% endif %}
+    <small class="form-text text-muted">
+        Upload a PDF document containing your rental terms and conditions. Tenants must sign this before occupying.
+    </small>
+</div>
+</body>
+</html>
