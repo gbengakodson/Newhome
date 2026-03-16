@@ -15,6 +15,9 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('verify/<str:uidb64>/<str:token>/', views.verify_email, name='verify_email'),
 
+    path('profile/', views.profile_view, name='profile_view'),
+    path('profile/update/', views.update_profile, name='update_profile'),
+
     # Dashboards
     path('dashboard/tenant/', views.tenant_dashboard, name='tenant_dashboard'),
     path('dashboard/landlord/', views.landlord_dashboard, name='landlord_dashboard'),

@@ -1,13 +1,12 @@
 {% load static %}
 <footer class="bg-dark text-white pt-5 pb-3 mt-5">
     <div class="container">
-        <!-- Main Footer Content -->
+        <!-- Main Footer Content (Desktop) -->
         <div class="row g-4">
-            <!-- Company Info -->
             <div class="col-lg-4 col-md-6">
                 <div class="footer-widget">
                     <h4 class="text-warning mb-4">
-                        <i class="fas fa-home"></i> Homigram<span class="text-white">Hub</span>
+                        <i class="fas fa-home"></i> Homigram<span class="text-white">hub</span>
                     </h4>
                     <p class="text-white-50 mb-4">
                         Your trusted platform for finding the perfect home. We connect tenants with verified landlords and make property rental seamless and secure.
@@ -25,25 +24,9 @@
                         <a href="#" class="btn btn-outline-light btn-social me-2">
                             <i class="fab fa-instagram"></i>
                         </a>
-                        <a href="#" class="btn btn-outline-light btn-social me-2">
+                        <a href="#" class="btn btn-outline-light btn-social">
                             <i class="fab fa-linkedin-in"></i>
                         </a>
-                        <a href="#" class="btn btn-outline-light btn-social">
-                            <i class="fab fa-youtube"></i>
-                        </a>
-                    </div>
-
-                    <!-- App Download -->
-                    <div class="app-download">
-                        <h6 class="text-white mb-3">Download App</h6>
-                        <div class="d-flex gap-2">
-                            <a href="#" class="btn btn-outline-light">
-                                <i class="fab fa-apple"></i> App Store
-                            </a>
-                            <a href="#" class="btn btn-outline-light">
-                                <i class="fab fa-google-play"></i> Google Play
-                            </a>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -73,16 +56,6 @@
                                 <i class="fas fa-chevron-right me-2 small"></i>Contact
                             </a>
                         </li>
-                        <li class="mb-2">
-                            <a href="#" class="text-white-50 text-decoration-none hover-link">
-                                <i class="fas fa-chevron-right me-2 small"></i>Blog
-                            </a>
-                        </li>
-                        <li class="mb-2">
-                            <a href="#" class="text-white-50 text-decoration-none hover-link">
-                                <i class="fas fa-chevron-right me-2 small"></i>FAQs
-                            </a>
-                        </li>
                     </ul>
                 </div>
             </div>
@@ -90,7 +63,7 @@
             <!-- For Tenants -->
             <div class="col-lg-2 col-md-6">
                 <div class="footer-widget">
-                    <h5 class="text-white mb-4">For Users</h5>
+                    <h5 class="text-white mb-4">For Tenants</h5>
                     <ul class="list-unstyled">
                         <li class="mb-2">
                             <a href="{% url 'property_list' %}" class="text-white-50 text-decoration-none hover-link">
@@ -104,17 +77,7 @@
                         </li>
                         <li class="mb-2">
                             <a href="#" class="text-white-50 text-decoration-none hover-link">
-                                <i class="fas fa-shield-alt me-2"></i>User Protection
-                            </a>
-                        </li>
-                        <li class="mb-2">
-                            <a href="#" class="text-white-50 text-decoration-none hover-link">
-                                <i class="fas fa-file-signature me-2"></i>Rental Guides
-                            </a>
-                        </li>
-                        <li class="mb-2">
-                            <a href="#" class="text-white-50 text-decoration-none hover-link">
-                                <i class="fas fa-comment me-2"></i>FAQs
+                                <i class="fas fa-shield-alt me-2"></i>Tenant Protection
                             </a>
                         </li>
                     </ul>
@@ -141,16 +104,6 @@
                                 <i class="fas fa-shield-alt me-2"></i>Landlord Protection
                             </a>
                         </li>
-                        <li class="mb-2">
-                            <a href="#" class="text-white-50 text-decoration-none hover-link">
-                                <i class="fas fa-hand-holding-usd me-2"></i>Rental Income
-                            </a>
-                        </li>
-                        <li class="mb-2">
-                            <a href="#" class="text-white-50 text-decoration-none hover-link">
-                                <i class="fas fa-file-contract me-2"></i>Legal Resources
-                            </a>
-                        </li>
                     </ul>
                 </div>
             </div>
@@ -162,7 +115,7 @@
                     <ul class="list-unstyled">
                         <li class="mb-3 d-flex">
                             <i class="fas fa-map-marker-alt text-warning me-3 mt-1"></i>
-                            <span class="text-white-50">123 Real Estate Ave, Lagos, Nigeria</span>
+                            <span class="text-white-50">Lagos, Nigeria</span>
                         </li>
                         <li class="mb-3 d-flex">
                             <i class="fas fa-phone text-warning me-3 mt-1"></i>
@@ -170,36 +123,9 @@
                         </li>
                         <li class="mb-3 d-flex">
                             <i class="fas fa-envelope text-warning me-3 mt-1"></i>
-                            <span class="text-white-50">support@realestatehub.com</span>
-                        </li>
-                        <li class="mb-3 d-flex">
-                            <i class="fas fa-clock text-warning me-3 mt-1"></i>
-                            <span class="text-white-50">Mon - Sat: 9:00 - 18:00</span>
+                            <span class="text-white-50">support@homigramhub.com</span>
                         </li>
                     </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- Newsletter Subscription -->
-        <div class="row mt-5">
-            <div class="col-lg-8 mx-auto">
-                <div class="newsletter-card bg-secondary bg-opacity-25 rounded-3 p-4">
-                    <div class="row align-items-center">
-                        <div class="col-md-6">
-                            <h5 class="text-white mb-2">Subscribe to Our Newsletter</h5>
-                            <p class="text-white-50 mb-md-0">Get latest properties and exclusive deals</p>
-                        </div>
-                        <div class="col-md-6">
-                            <form class="d-flex gap-2" id="newsletterForm">
-                                {% csrf_token %}
-                                <input type="email" class="form-control" placeholder="Your email address" required>
-                                <button type="submit" class="btn btn-warning">
-                                    <i class="fas fa-paper-plane"></i>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -208,41 +134,72 @@
         <div class="row mt-5">
             <div class="col-12">
                 <hr class="bg-secondary opacity-25">
-
-                <div class="row align-items-center">
-                    <!-- Copyright -->
-                    <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
-                        <p class="text-white-50 small mb-0">
-                            <i class="far fa-copyright"></i> {% now "Y" %} The HomigramHub. All rights reserved.
-                        </p>
-                    </div>
-
-                    <!-- Payment Methods -->
-                    <div class="col-md-6 text-center text-md-end">
-                        <span class="text-white-50 me-3 small">We Accept:</span>
-                        <i class="fab fa-cc-visa fa-2x text-white-50 me-2"></i>
-                        <i class="fab fa-cc-mastercard fa-2x text-white-50 me-2"></i>
-                        <i class="fab fa-cc-paypal fa-2x text-white-50 me-2"></i>
-                        <i class="fab fa-cc-apple-pay fa-2x text-white-50"></i>
-                    </div>
-                </div>
-
-                <!-- Legal Links -->
-                <div class="row mt-3">
-                    <div class="col-12 text-center">
-                        <a href="#" class="text-white-50 text-decoration-none small me-3 hover-link">Privacy Policy</a>
-                        <a href="#" class="text-white-50 text-decoration-none small me-3 hover-link">Terms of Service</a>
-                        <a href="#" class="text-white-50 text-decoration-none small me-3 hover-link">Cookie Policy</a>
-                        <a href="#" class="text-white-50 text-decoration-none small">Sitemap</a>
-                    </div>
+                <div class="text-center">
+                    <p class="text-white-50 small mb-0">
+                        <i class="far fa-copyright"></i> {% now "Y" %} Homigramhub. All rights reserved.
+                    </p>
                 </div>
             </div>
         </div>
     </div>
 </footer>
 
+<!-- ========================================= -->
+<!-- MOBILE BOTTOM NAVIGATION (Fixed at bottom) -->
+<!-- ========================================= -->
+<nav class="mobile-bottom-nav d-lg-none fixed-bottom bg-white border-top shadow-lg">
+    <div class="container">
+        <div class="row text-center py-2">
+            <div class="col-3">
+                <a href="{% url 'home' %}" class="text-decoration-none text-secondary">
+                    <i class="fas fa-home fa-lg"></i>
+                    <span class="d-block small">Home</span>
+                </a>
+            </div>
+            <div class="col-3">
+                <a href="{% url 'property_list' %}" class="text-decoration-none text-secondary">
+                    <i class="fas fa-search fa-lg"></i>
+                    <span class="d-block small">Browse</span>
+                </a>
+            </div>
+
+            {% if user.is_authenticated %}
+                <div class="col-3">
+                    {% if user.profile.user_type == 'tenant' %}
+                        <a href="{% url 'tenant_dashboard' %}" class="text-decoration-none text-secondary">
+                    {% else %}
+                        <a href="{% url 'landlord_dashboard' %}" class="text-decoration-none text-secondary">
+                    {% endif %}
+                        <i class="fas fa-tachometer-alt fa-lg"></i>
+                        <span class="d-block small">Dashboard</span>
+                    </a>
+                 </div>
+                <div class="col-3">
+                    <a href="{% url 'tenant_profile' user.id %}" class="text-decoration-none text-secondary">
+                        <i class="fas fa-user fa-lg"></i>
+                        <span class="d-block small">Profile</span>
+                    </a>
+                </div>
+            {% else %}
+                <div class="col-3">
+                    <a href="{% url 'login' %}" class="text-decoration-none text-secondary">
+                        <i class="fas fa-sign-in-alt fa-lg"></i>
+                        <span class="d-block small">Login</span>
+                    </a>
+                </div>
+                <div class="col-3">
+                    <a href="{% url 'register' %}" class="text-decoration-none text-secondary">
+                        <i class="fas fa-user-plus fa-lg"></i>
+                        <span class="d-block small">Register</span>
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
 <style>
-/* Footer Styles */
+/* Footer Widget Styles */
 .footer-widget h4, .footer-widget h5 {
     position: relative;
     padding-bottom: 10px;
@@ -258,7 +215,6 @@
     background: #ffc107;
 }
 
-/* Hover Effects */
 .hover-link {
     transition: all 0.3s ease;
     display: inline-block;
@@ -269,7 +225,6 @@
     transform: translateX(5px);
 }
 
-/* Social Buttons */
 .btn-social {
     width: 38px;
     height: 38px;
@@ -288,74 +243,42 @@
     transform: translateY(-3px);
 }
 
-/* Newsletter Card */
-.newsletter-card {
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.1);
+/* Mobile Bottom Navigation */
+.mobile-bottom-nav {
+    z-index: 1030;
+    padding-bottom: env(safe-area-inset-bottom);
 }
 
-.newsletter-card .form-control {
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.2);
-    color: white;
+.mobile-bottom-nav .col-3 a {
+    transition: all 0.2s;
+    display: block;
+    padding: 5px 0;
 }
 
-.newsletter-card .form-control:focus {
-    background: rgba(255,255,255,0.15);
-    border-color: #ffc107;
-    box-shadow: none;
+.mobile-bottom-nav .col-3 a:hover {
+    color: #2563eb !important;
+    transform: translateY(-2px);
 }
 
-.newsletter-card .form-control::placeholder {
-    color: rgba(255,255,255,0.5);
+.mobile-bottom-nav .col-3 a i {
+    font-size: 1.3rem;
 }
 
-.newsletter-card .btn-warning {
-    transition: all 0.3s;
+.mobile-bottom-nav .col-3 a span {
+    font-size: 0.7rem;
+    font-weight: 500;
 }
 
-.newsletter-card .btn-warning:hover {
-    transform: scale(1.05);
-}
-
-/* Payment Icons */
-.fa-cc-visa, .fa-cc-mastercard, .fa-cc-paypal, .fa-cc-apple-pay {
-    transition: all 0.3s;
-    cursor: default;
-}
-
-.fa-cc-visa:hover, .fa-cc-mastercard:hover, .fa-cc-paypal:hover, .fa-cc-apple-pay:hover {
-    transform: translateY(-3px);
-    color: #ffc107 !important;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .footer-widget {
-        text-align: center;
+/* Adjust body padding for mobile */
+@media (max-width: 991px) {
+    body {
+        margin-bottom: 70px;
     }
+}
 
-    .footer-widget h4::after, .footer-widget h5::after {
-        left: 50%;
-        transform: translateX(-50%);
-    }
-
-    .social-links {
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-
-    .app-download .d-flex {
-        justify-content: center;
-    }
-
-    .newsletter-card .d-flex {
-        flex-direction: column !important;
-    }
-
-    .newsletter-card .btn {
-        width: 100%;
+@media (min-width: 992px) {
+    .mobile-bottom-nav {
+        display: none !important;
     }
 }
 
@@ -422,23 +345,5 @@ window.addEventListener('scroll', function() {
 document.getElementById('backToTop').addEventListener('click', function(e) {
     e.preventDefault();
     window.scrollTo({ top: 0, behavior: 'smooth' });
-});
-
-// Newsletter Form
-document.getElementById('newsletterForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    var email = this.querySelector('input[type="email"]').value;
-
-    // Show success message (you can replace with actual AJAX call)
-    alert('Thank you for subscribing! We\'ll keep you updated.');
-    this.reset();
-});
-
-// Current Year for Copyright
-document.addEventListener('DOMContentLoaded', function() {
-    var yearElements = document.querySelectorAll('[data-year]');
-    yearElements.forEach(function(el) {
-        el.textContent = new Date().getFullYear();
-    });
 });
 </script>

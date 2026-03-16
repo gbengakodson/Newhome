@@ -1,0 +1,549 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-light p-3 rounded">
+                    <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{% if user.profile.user_type == 'tenant' %}{% url 'tenant_dashboard' %}{% else %}{% url 'landlord_dashboard' %}{% endif %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">My Profile</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left Column - Profile Card -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm border-0">
+                <!-- Profile Header with Cover -->
+                <div class="position-relative">
+                    <div class="profile-cover bg-primary" style="height: 100px; border-radius: 12px 12px 0 0;"></div>
+                    <div class="position-absolute top-0 start-50 translate-middle-x mt-5">
+                        <div class="profile-avatar-wrapper">
+                            {% if profile.passport_photo %}
+                                <img src="{{ profile.passport_photo.url }}"
+                                     class="rounded-circle border border-4 border-white shadow"
+                                     style="width: 120px; height: 120px; object-fit: cover;">
+                            {% else %}
+                                <div class="rounded-circle bg-white shadow d-flex align-items-center justify-content-center"
+                                     style="width: 120px; height: 120px; font-size: 3rem; color: #2563eb; border: 4px solid white;">
+                                    {{ user.username|first|upper }}
+                                </div>
+                            {% endif %}
+
+                            <!-- Verification Badge -->
+                            {% if profile.is_verified %}
+                                <div class="position-absolute bottom-0 end-0 bg-success rounded-circle p-1 border border-2 border-white">
+                                    <i class="fas fa-check text-white fa-sm"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body text-center mt-5 pt-4">
+                    <h4 class="fw-bold mb-1">{{ user.get_full_name|default:user.username }}</h4>
+                    <p class="text-muted mb-2">@{{ user.username }}</p>
+
+                    <!-- User Type Badge -->
+                    <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 mb-3">
+                        <i class="fas {% if profile.user_type == 'landlord' %}fa-building{% else %}fa-user{% endif %} me-2"></i>
+                        {{ profile.get_user_type_display }}
+                    </span>
+
+                    <!-- Rating (for landlords) -->
+                    {% if profile.user_type == 'landlord' %}
+                        <div class="d-flex justify-content-center align-items-center mb-3">
+                            <div class="text-warning me-2">
+                                {% for i in "12345"|make_list %}
+                                    {% if forloop.counter <= avg_rating %}
+                                        <i class="fas fa-star"></i>
+                                    {% else %}
+                                        <i class="far fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <span class="fw-semibold">{{ avg_rating }}</span>
+                            <span class="text-muted ms-1">({{ total_ratings }} reviews)</span>
+                        </div>
+                    {% endif %}
+
+                    <!-- Member Since -->
+                    <p class="small text-muted mb-3">
+                        <i class="far fa-calendar-alt me-1"></i>
+                        Member since {{ user.date_joined|date:"F Y" }}
+                    </p>
+
+                    <!-- Edit Profile Button -->
+                    <button class="btn btn-outline-primary w-100 mb-3" onclick="toggleEditMode()">
+                        <i class="fas fa-edit me-2"></i>Edit Profile
+                    </button>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="card-footer bg-white border-0 pb-4">
+                    <h6 class="fw-semibold mb-3">
+                        <i class="fas fa-address-card text-primary me-2"></i>
+                        Contact Information
+                    </h6>
+
+                    <div class="contact-info">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="contact-icon bg-light rounded-circle p-2 me-3">
+                                <i class="fas fa-envelope text-primary"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <small class="text-muted d-block">Email</small>
+                                <span class="fw-medium">{{ user.email }}</span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="contact-icon bg-light rounded-circle p-2 me-3">
+                                <i class="fas fa-phone text-primary"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <small class="text-muted d-block">Phone</small>
+                                <span class="fw-medium">{{ profile.phone|default:"Not provided" }}</span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="contact-icon bg-light rounded-circle p-2 me-3">
+                                <i class="fas fa-map-marker-alt text-primary"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <small class="text-muted d-block">Location</small>
+                                <span class="fw-medium">{{ profile.city|default:"Not specified" }}, {{ profile.state|default:"" }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Verification Status -->
+                    <div class="verification-status mt-4 p-3 bg-light rounded-4">
+                        <h6 class="fw-semibold mb-3">
+                            <i class="fas fa-shield-alt text-primary me-2"></i>
+                            Verification Status
+                        </h6>
+
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>Email Verified</span>
+                            {% if profile.email_verified %}
+                                <span class="badge bg-success"><i class="fas fa-check me-1"></i>Verified</span>
+                            {% else %}
+                                <span class="badge bg-warning">Pending</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>Identity Verified</span>
+                            {% if profile.is_verified %}
+                                <span class="badge bg-success"><i class="fas fa-check me-1"></i>Verified</span>
+                            {% else %}
+                                <span class="badge bg-warning">Pending</span>
+                                {% if not profile.verification_submitted_at %}
+                                    <a href="{% url 'submit_verification' %}" class="btn btn-sm btn-outline-primary">Verify Now</a>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+
+                        {% if profile.verification_submitted_at and not profile.is_verified %}
+                            <p class="small text-muted mt-2">
+                                <i class="fas fa-clock me-1"></i>
+                                Submitted on {{ profile.verification_submitted_at|date:"M d, Y" }}
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Main Content -->
+        <div class="col-lg-8">
+            <!-- Edit Mode Form (Hidden by default) -->
+            <div class="card shadow-sm border-0 mb-4" id="editProfileForm" style="display: none;">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-edit text-primary me-2"></i>
+                        Edit Profile
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" id="profileEditForm">
+                        {% csrf_token %}
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">First Name</label>
+                                <input type="text" name="first_name" class="form-control" value="{{ user.first_name }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Last Name</label>
+                                <input type="text" name="last_name" class="form-control" value="{{ user.last_name }}">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Phone Number</label>
+                            <input type="text" name="phone" class="form-control" value="{{ profile.phone }}">
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">City</label>
+                                <input type="text" name="city" class="form-control" value="{{ profile.city }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">State</label>
+                                <input type="text" name="state" class="form-control" value="{{ profile.state }}">
+                            </div>
+                        </div>
+
+                        {% if profile.user_type == 'tenant' %}
+                        <h6 class="fw-semibold mt-4 mb-3">Personal Information</h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Occupation</label>
+                                <input type="text" name="occupation" class="form-control" value="{{ profile.occupation }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Marital Status</label>
+                                <select name="marital_status" class="form-control">
+                                    <option value="">Select</option>
+                                    <option value="single" {% if profile.marital_status == 'single' %}selected{% endif %}>Single</option>
+                                    <option value="married" {% if profile.marital_status == 'married' %}selected{% endif %}>Married</option>
+                                    <option value="divorced" {% if profile.marital_status == 'divorced' %}selected{% endif %}>Divorced</option>
+                                    <option value="widowed" {% if profile.marital_status == 'widowed' %}selected{% endif %}>Widowed</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Religion</label>
+                                <input type="text" name="religion" class="form-control" value="{{ profile.religion }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">State of Origin</label>
+                                <input type="text" name="state_of_origin" class="form-control" value="{{ profile.state_of_origin }}">
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label class="form-label">Profile Photo</label>
+                            <input type="file" name="passport_photo" class="form-control" accept="image/*">
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Save Changes
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="toggleEditMode()">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3 col-6">
+                    <div class="card shadow-sm border-0 text-center p-3">
+                        <i class="fas fa-eye fa-2x text-primary mb-2"></i>
+                        <h5 class="fw-bold mb-0">{{ total_inspections|default:"0" }}</h5>
+                        <small class="text-muted">Inspections</small>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="card shadow-sm border-0 text-center p-3">
+                        <i class="fas fa-thumbs-up fa-2x text-success mb-2"></i>
+                        <h5 class="fw-bold mb-0">{{ approved_interests|default:"0" }}</h5>
+                        <small class="text-muted">Approved</small>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="card shadow-sm border-0 text-center p-3">
+                        <i class="fas fa-lock fa-2x text-warning mb-2"></i>
+                        <h5 class="fw-bold mb-0">{{ active_escrows|default:"0" }}</h5>
+                        <small class="text-muted">In Escrow</small>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="card shadow-sm border-0 text-center p-3">
+                        <i class="fas fa-calendar-check fa-2x text-info mb-2"></i>
+                        <h5 class="fw-bold mb-0">{{ active_reservations|default:"0" }}</h5>
+                        <small class="text-muted">Reservations</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabs Navigation -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#activity">
+                                <i class="fas fa-history me-2"></i>Recent Activity
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#transactions">
+                                <i class="fas fa-exchange-alt me-2"></i>Transactions
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#reviews">
+                                <i class="fas fa-star me-2"></i>Reviews
+                            </a>
+                        </li>
+                        {% if profile.user_type == 'landlord' %}
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#properties">
+                                <i class="fas fa-building me-2"></i>My Properties
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+                <div class="card-body">
+                    <div class="tab-content">
+                        <!-- Activity Tab -->
+                        <div class="tab-pane fade show active" id="activity">
+                            <div class="timeline">
+                                {% for activity in recent_activities %}
+                                <div class="d-flex mb-4">
+                                    <div class="me-3">
+                                        <div class="rounded-circle bg-{{ activity.color }} bg-opacity-10 p-2">
+                                            <i class="fas {{ activity.icon }} text-{{ activity.color }}"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between">
+                                            <h6 class="fw-semibold mb-1">{{ activity.title }}</h6>
+                                            <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
+                                        </div>
+                                        <p class="text-muted small mb-0">{{ activity.description }}</p>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <p class="text-muted text-center py-4">No recent activity</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Transactions Tab -->
+                        <div class="tab-pane fade" id="transactions">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Description</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for t in transactions %}
+                                        <tr>
+                                            <td>{{ t.created_at|date:"M d, Y" }}</td>
+                                            <td>{{ t.description|truncatechars:30 }}</td>
+                                            <td class="{% if t.amount > 0 %}text-success{% else %}text-danger{% endif %}">
+                                                {% if t.amount > 0 %}+{% endif %}₦{{ t.amount|floatformat:0|intcomma }}
+                                            </td>
+                                            <td>
+                                                {% if t.status == 'success' %}
+                                                    <span class="badge bg-success">Completed</span>
+                                                {% elif t.status == 'pending' %}
+                                                    <span class="badge bg-warning">Pending</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Failed</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="4" class="text-center py-4">
+                                                <i class="fas fa-exchange-alt fa-2x text-muted mb-2"></i>
+                                                <p class="mb-0">No transactions yet</p>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Reviews Tab -->
+                        <div class="tab-pane fade" id="reviews">
+                            {% if reviews_received %}
+                                {% for review in reviews_received %}
+                                <div class="border-bottom pb-3 mb-3">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <strong>{{ review.rater.username }}</strong>
+                                            <span class="text-muted ms-2">({{ review.rater.profile.user_type }})</span>
+                                            <p class="mb-1">{{ review.comment }}</p>
+                                            <small class="text-muted">{{ review.created_at|date:"M d, Y" }}</small>
+                                        </div>
+                                        <div class="text-warning">
+                                            {% for i in "12345"|make_list %}
+                                                {% if forloop.counter <= review.score %}
+                                                    <i class="fas fa-star"></i>
+                                                {% else %}
+                                                    <i class="far fa-star"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-muted text-center py-4">No reviews yet</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Properties Tab (for landlords) -->
+                        {% if profile.user_type == 'landlord' %}
+                        <div class="tab-pane fade" id="properties">
+                            <div class="row">
+                                {% for property in properties %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card property-mini-card">
+                                        <div class="row g-0">
+                                            <div class="col-4">
+                                                {% if property.images.first %}
+                                                    <img src="{{ property.images.first.image.url }}"
+                                                         class="img-fluid rounded-start"
+                                                         style="height: 100%; object-fit: cover;">
+                                                {% else %}
+                                                    <div class="bg-secondary h-100 d-flex align-items-center justify-content-center">
+                                                        <i class="fas fa-home text-white"></i>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-8">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">{{ property.title|truncatechars:20 }}</h6>
+                                                    <p class="small text-muted mb-1">{{ property.city }}</p>
+                                                    <p class="fw-bold text-primary mb-0">₦{{ property.price|floatformat:0 }}/mo</p>
+                                                    <a href="{% url 'property_detail' property.id %}" class="btn btn-sm btn-outline-primary mt-2">View</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <p class="text-muted text-center py-4">No properties listed yet</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.profile-avatar-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.contact-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.timeline .d-flex {
+    transition: all 0.3s;
+    padding: 0.5rem;
+    border-radius: 8px;
+}
+
+.timeline .d-flex:hover {
+    background-color: #f8f9fa;
+    transform: translateX(5px);
+}
+
+.property-mini-card {
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s;
+    overflow: hidden;
+}
+
+.property-mini-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    border-color: #2563eb;
+}
+
+.nav-tabs .nav-link {
+    color: #64748b;
+    font-weight: 500;
+    border: none;
+    padding: 0.5rem 1rem;
+}
+
+.nav-tabs .nav-link:hover {
+    color: #2563eb;
+    border: none;
+}
+
+.nav-tabs .nav-link.active {
+    color: #2563eb;
+    background: none;
+    border-bottom: 2px solid #2563eb;
+}
+
+@media (max-width: 768px) {
+    .nav-tabs .nav-link {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+    }
+}
+</style>
+
+<script>
+function toggleEditMode() {
+    const editForm = document.getElementById('editProfileForm');
+    const profileCard = document.querySelector('.profile-card');
+
+    if (editForm.style.display === 'none') {
+        editForm.style.display = 'block';
+        // Scroll to edit form
+        editForm.scrollIntoView({ behavior: 'smooth' });
+    } else {
+        editForm.style.display = 'none';
+    }
+}
+
+// Handle profile photo preview
+document.querySelector('input[name="passport_photo"]')?.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.querySelector('.profile-avatar-wrapper img');
+            if (preview) {
+                preview.src = e.target.result;
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+});
+</script>
+{% endblock %}

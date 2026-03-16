@@ -48,12 +48,137 @@ from .decorators import (
 # Instead of: from .utils import send_verification_email
 from homigram.utils import send_verification_email, account_activation_token
 
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.db.models import Avg, Sum, Count
+from django.utils import timezone
+from .models import User, Profile, Property, Interest, Escrow, Reservation, Transaction, Rating, PropertyReview, \
+    Inspection, ChatMessage, OccupancyRequest
 
 
+@login_required
+def profile_view(request):
+    """Unified profile view for both tenants and landlords"""
+    user = request.user
+    profile = user.profile
+
+    # Common data for all users
+    transactions = Transaction.objects.filter(user=user).order_by('-created_at')[:10]
+
+    # Reviews received
+    if profile.user_type == 'landlord':
+        reviews_received = Rating.objects.filter(
+            rated_user=user,
+            rating_type='tenant_to_landlord'
+        ).select_related('rater', 'property')
+        avg_rating = reviews_received.aggregate(Avg('score'))['score__avg'] or 0
+    else:
+        reviews_received = Rating.objects.filter(
+            rated_user=user,
+            rating_type='landlord_to_tenant'
+        ).select_related('rater', 'property')
+        avg_rating = reviews_received.aggregate(Avg('score'))['score__avg'] or 0
+
+    # Recent activities
+    recent_activities = []
+
+    # Add interests
+    for interest in Interest.objects.filter(tenant=user).order_by('-created_at')[:3]:
+        recent_activities.append({
+            'title': f'Interest in {interest.property.title}',
+            'description': f'Status: {interest.status}',
+            'timestamp': interest.created_at,
+            'color': 'primary',
+            'icon': 'fa-thumbs-up'
+        })
+
+    # Add escrows
+    for escrow in Escrow.objects.filter(tenant=user).order_by('-created_at')[:3]:
+        recent_activities.append({
+            'title': f'{escrow.get_escrow_type_display()} Deposit',
+            'description': f'Amount: ₦{escrow.amount}',
+            'timestamp': escrow.created_at,
+            'color': 'warning',
+            'icon': 'fa-lock'
+        })
+
+    # Add reservations
+    for res in Reservation.objects.filter(tenant=user).order_by('-created_at')[:3]:
+        recent_activities.append({
+            'title': f'Reservation for {res.property.title}',
+            'description': f'Status: {res.status}',
+            'timestamp': res.created_at,
+            'color': 'info',
+            'icon': 'fa-calendar-alt'
+        })
+
+    # Sort activities by timestamp
+    recent_activities.sort(key=lambda x: x['timestamp'], reverse=True)
+    recent_activities = recent_activities[:10]
+
+    # Stats
+    total_inspections = Inspection.objects.filter(user=user).count()
+    approved_interests = Interest.objects.filter(tenant=user, status='approved').count()
+    active_escrows = Escrow.objects.filter(tenant=user, status='held').count()
+    active_reservations = Reservation.objects.filter(tenant=user, status='active').count()
+
+    # For landlords, get their properties
+    properties = None
+    if profile.user_type == 'landlord':
+        properties = Property.objects.filter(landlord=user).order_by('-created_at')[:6]
+
+    context = {
+        'profile': profile,
+        'transactions': transactions,
+        'reviews_received': reviews_received,
+        'avg_rating': round(avg_rating, 1),
+        'total_ratings': reviews_received.count(),
+        'recent_activities': recent_activities,
+        'total_inspections': total_inspections,
+        'approved_interests': approved_interests,
+        'active_escrows': active_escrows,
+        'active_reservations': active_reservations,
+        'properties': properties,
+        'now': timezone.now(),
+    }
+
+    return render(request, 'profile.html', context)
 
 
-# Create your views here.
+@login_required
+def update_profile(request):
+    """Handle profile updates"""
+    if request.method == 'POST':
+        user = request.user
+        profile = user.profile
 
+        # Update user fields
+        user.first_name = request.POST.get('first_name', user.first_name)
+        user.last_name = request.POST.get('last_name', user.last_name)
+        user.save()
+
+        # Update profile fields
+        profile.phone = request.POST.get('phone', profile.phone)
+        profile.city = request.POST.get('city', profile.city)
+        profile.state = request.POST.get('state', profile.state)
+
+        if profile.user_type == 'tenant':
+            profile.occupation = request.POST.get('occupation', profile.occupation)
+            profile.marital_status = request.POST.get('marital_status', profile.marital_status)
+            profile.religion = request.POST.get('religion', profile.religion)
+            profile.state_of_origin = request.POST.get('state_of_origin', profile.state_of_origin)
+
+        # Handle photo upload
+        if 'passport_photo' in request.FILES:
+            profile.passport_photo = request.FILES['passport_photo']
+
+        profile.save()
+
+        messages.success(request, 'Profile updated successfully!')
+        return redirect('profile_view')
+
+    return redirect('profile_view')
 
 
 
@@ -109,42 +234,58 @@ class CustomUserCreationForm(UserCreationForm):
         fields = UserCreationForm.Meta.fields + ('email',)
 
 
+from django.contrib.sites.shortcuts import get_current_site
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.template.loader import render_to_string
+from django.core.mail import send_mail
+from django.conf import settings
+from .utils import account_activation_token
+
+
 def register(request):
     if request.method == 'POST':
-        form = CustomUserCreationForm(request.POST)
+        # ... your form handling code ...
+
         if form.is_valid():
-            user = form.save()
-
-            # Get additional data
-            first_name = request.POST.get('first_name', '')
-            last_name = request.POST.get('last_name', '')
-            phone = request.POST.get('phone', '')
-            user_type = request.POST.get('user_type', 'tenant')
-
-            # Update user
-            user.first_name = first_name
-            user.last_name = last_name
-            user.email = request.POST.get('email', '')
+            user = form.save(commit=False)
+            user.is_active = False  # Important: Deactivate until email verified
             user.save()
 
             # Create profile
             Profile.objects.create(
                 user=user,
-                user_type=user_type,
-                phone=phone,
-                email_verified=False,
-                wallet_balance=0.00
+                user_type=request.POST.get('user_type', 'tenant'),
+                phone=request.POST.get('phone', ''),
+                email_verified=False
             )
 
-            messages.success(request, 'Registration successful! You can now login.')
-            return redirect('login')
-        else:
-            # Form has errors, will display in template
-            pass
-    else:
-        form = CustomUserCreationForm()
+            # Send verification email
+            current_site = get_current_site(request)
+            mail_subject = 'Activate Your Homigram.ng Account'
 
-    return render(request, 'register.html', {'form': form})
+            message = render_to_string('verification_email.html', {
+                'user': user,
+                'domain': current_site.domain,
+                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                'token': account_activation_token.make_token(user),
+                'protocol': 'https',
+            })
+
+            send_mail(
+                mail_subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=False,
+            )
+
+            messages.success(request, 'Please check your email to verify your account.')
+            return redirect('login')
+
+    # ... rest of your view
+
+
 
 def verify_email(request, uidb64, token):
     try:
